@@ -1,0 +1,10 @@
+go 1.26.3
+
+use (
+	./backend/pkg
+	./backend/services/auth
+	./backend/services/finance
+	./backend/services/inventory
+	./backend/services/procurement
+	./backend/services/intelligence
+)

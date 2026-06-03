@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import promBundle from 'express-prom-bundle';
 
 // Load environment variables from root directory .env
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -27,6 +28,17 @@ app.use(cors({
 // Apply global middlewares
 app.use(correlationIdMiddleware);
 app.use(rateLimitMiddleware);
+
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  includeStatusCode: true,
+  includeUp: true,
+  promClient: {
+    collectDefaultMetrics: {}
+  }
+});
+app.use(metricsMiddleware);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

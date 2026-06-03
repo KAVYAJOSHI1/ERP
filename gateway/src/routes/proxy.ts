@@ -8,8 +8,9 @@ const router = Router();
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:8080';
 const INVENTORY_SERVICE_URL = process.env.INVENTORY_SERVICE_URL || 'http://localhost:8081';
 const PROCUREMENT_SERVICE_URL = process.env.PROCUREMENT_SERVICE_URL || 'http://localhost:8082';
-const PRODUCTION_SERVICE_URL = process.env.PRODUCTION_SERVICE_URL || 'http://localhost:8083';
-const FINANCE_SERVICE_URL = process.env.FINANCE_SERVICE_URL || 'http://localhost:8084';
+const PRODUCTION_SERVICE_URL = process.env.PRODUCTION_SERVICE_URL || 'http://localhost:8085';
+const FINANCE_SERVICE_URL = process.env.FINANCE_SERVICE_URL || 'http://localhost:8083';
+const INTELLIGENCE_SERVICE_URL = process.env.INTELLIGENCE_SERVICE_URL || 'http://localhost:8084';
 
 // Helper to configure proxy forwarding and headers injection
 const createServiceProxy = (target: string, pathRewritePattern: string) => {
@@ -114,6 +115,14 @@ router.post(
   authMiddleware, 
   rbacMiddleware(['admin', 'finance_manager']), 
   createServiceProxy(FINANCE_SERVICE_URL, '^/api')
+);
+
+// 6. Intelligence Service Routing
+router.get(
+  '/intelligence*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'warehouse_manager', 'procurement_manager', 'production_manager', 'finance_manager', 'viewer']), 
+  createServiceProxy(INTELLIGENCE_SERVICE_URL, '^/api')
 );
 
 export default router;

@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"strings"
+	"time"
 
+	pkgKafka "backend/pkg/kafka"
+	"backend/pkg/outbox"
 	"inventory-service/config"
 	"inventory-service/handlers"
 
@@ -11,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
+	"github.com/ansrivas/fiberprometheus/v2"
 )
 
 func main() {
@@ -20,6 +26,26 @@ func main() {
 	_ = godotenv.Load(".env")
 
 	config.ConnectDB()
+
+	// Start outbox relay worker
+	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
+	if kafkaBrokers == "" {
+		kafkaBrokers = "localhost:9092"
+	}
+	brokersList := strings.Split(kafkaBrokers, ",")
+
+	producer := pkgKafka.NewProducer(brokersList)
+	defer producer.Close()
+
+	topicMap := map[string]string{
+		"StockUpdated": "erp.inventory.stock-updated",
+	}
+
+	relayWorker := outbox.NewRelayWorker(config.DB, producer, "inventory-service", "inventory.outbox_events", topicMap)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go relayWorker.Start(ctx, 500*time.Millisecond)
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -36,6 +62,10 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(logger.New())
+
+	prometheus := fiberprometheus.New("inventory-service")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

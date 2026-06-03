@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
+	"github.com/ansrivas/fiberprometheus/v2"
 )
 
 func main() {
@@ -37,6 +38,10 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(logger.New())
+
+	prometheus := fiberprometheus.New("auth-service")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

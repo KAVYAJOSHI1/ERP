@@ -46,15 +46,19 @@ Manages product catalogs and warehouse stock levels:
 ```
 .
 ├── backend/
+│   └── pkg/                  # Shared Go libraries (Kafka Outbox)
 │   └── services/
 │       ├── auth/             # Go identity & session service
-│       └── inventory/        # Go product & stock manager
+│       ├── inventory/        # Go product & stock manager
+│       ├── procurement/      # Go automated purchasing service
+│       ├── finance/          # Go double-entry ledger & invoicing
+│       └── intelligence/     # Go demand forecasting service
 ├── frontend/                 # Next.js 15 portal styled with a dark industrial theme
 ├── gateway/                  # Node.js Express API Gateway
 ├── infra/
-│   └── postgres/
-│       └── init/             # Database schemas & seeds for each domain
-├── docker-compose.yml        # Development environment infra (Postgres, Redis, MinIO)
+│   ├── postgres/init/        # Database schemas & seeds for each domain
+│   └── observability/        # Prometheus, Loki, Promtail, Grafana config
+├── docker-compose.yml        # Infrastructure (Postgres, Redis, MinIO, Kafka, Observability)
 └── README.md
 ```
 
@@ -113,12 +117,14 @@ npm run dev
   - Node.js gateway with RBAC, Correlation ID, and Redis rate limiter.
   - Go Auth and Inventory services.
   - Next.js 15 layout, Zustand store, and TanStack query components.
-- **Phase 2: Event-Driven Broker Integration** (Upcoming)
-  - Deploys Kafka and implements the Outbox Pattern relay worker in Go.
-  - Implements Procurement Service reacting to stock level breaches.
-- **Phase 3: Intelligence & Finance** (Upcoming)
-  - Demand forecasting engine using moving averages.
-  - PDF Invoice generation uploaded to MinIO.
-  - Double-entry ledger engine in Finance Service.
-- **Phase 4: Observability & Resilience** (Upcoming)
-  - Prometheus metrics, Grafana dashboards, Loki log aggregation, and Kubernetes manifests.
+- **Phase 2: Event-Driven Broker Integration** (Completed)
+  - Deployed Kafka and implemented the Outbox Pattern relay worker in Go.
+  - Implemented Procurement Service reacting to stock level breaches with Idempotency guarantees.
+- **Phase 3: Intelligence & Finance** (Completed)
+  - Built predictive demand forecasting engine.
+  - Generated PDF Invoices and uploaded them to MinIO.
+  - Built strictly balanced double-entry ledger engine in Finance Service.
+- **Phase 4: Observability & Resilience** (Completed)
+  - Added Prometheus metrics collection via `fiberprometheus` and `express-prom-bundle`.
+  - Added Promtail/Loki log aggregation.
+  - Provided Grafana observability dashboards.
