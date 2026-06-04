@@ -1,6 +1,6 @@
 import { useAuthStore } from './store';
 
-const GATEWAY_URL = 'http://localhost:5000/api';
+const GATEWAY_URL = 'http://localhost:8000/api';
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;

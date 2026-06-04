@@ -8,10 +8,8 @@ const router = Router();
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:8080';
 const INVENTORY_SERVICE_URL = process.env.INVENTORY_SERVICE_URL || 'http://localhost:8081';
 const PROCUREMENT_SERVICE_URL = process.env.PROCUREMENT_SERVICE_URL || 'http://localhost:8082';
-const PRODUCTION_SERVICE_URL = process.env.PRODUCTION_SERVICE_URL || 'http://localhost:8085';
 const FINANCE_SERVICE_URL = process.env.FINANCE_SERVICE_URL || 'http://localhost:8083';
 const INTELLIGENCE_SERVICE_URL = process.env.INTELLIGENCE_SERVICE_URL || 'http://localhost:8084';
-
 // Helper to configure proxy forwarding and headers injection
 const createServiceProxy = (target: string, pathRewritePattern: string) => {
   return createProxyMiddleware({
@@ -47,7 +45,7 @@ const createServiceProxy = (target: string, pathRewritePattern: string) => {
 
 // 1. Auth Service Routes (No auth check in Gateway for register/login, but we can pass all under /api/auth to Auth Service)
 // Note: Auth service can internally check JWT if it needs to (like for logout or refresh)
-router.use('/auth', createServiceProxy(AUTH_SERVICE_URL, '^/api/auth'));
+router.all('/auth*', createServiceProxy(AUTH_SERVICE_URL, '^/api'));
 
 // 2. Inventory Service Routing
 router.get(
@@ -87,20 +85,6 @@ router.post(
   authMiddleware, 
   rbacMiddleware(['admin', 'procurement_manager']), 
   createServiceProxy(PROCUREMENT_SERVICE_URL, '^/api')
-);
-
-// 4. Production Service Routing
-router.get(
-  '/production*', 
-  authMiddleware, 
-  rbacMiddleware(['admin', 'production_manager', 'viewer']), 
-  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
-);
-router.post(
-  '/production*', 
-  authMiddleware, 
-  rbacMiddleware(['admin', 'production_manager']), 
-  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
 );
 
 // 5. Finance Service Routing
