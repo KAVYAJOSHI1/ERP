@@ -9,6 +9,7 @@ import (
 
 	"auth-service/config"
 	"auth-service/models"
+	"auth-service/telemetry"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -54,10 +55,12 @@ func generateJti() string {
 func Register(c *fiber.Ctx) error {
 	var req RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
+		telemetry.RegistrationsTotal.WithLabelValues("failure").Inc()
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Invalid request payload"})
 	}
 
 	if req.Email == "" || req.Password == "" {
+		telemetry.RegistrationsTotal.WithLabelValues("failure").Inc()
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Email and password are required"})
 	}
 
@@ -76,18 +79,21 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	if !allowedRoles[req.Role] {
+		telemetry.RegistrationsTotal.WithLabelValues("failure").Inc()
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Invalid role"})
 	}
 
 	// Check if user already exists
 	var existingUser models.User
 	if err := config.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
+		telemetry.RegistrationsTotal.WithLabelValues("conflict").Inc()
 		return c.Status(409).JSON(fiber.Map{"error": "Conflict", "message": "Email is already registered"})
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
+		telemetry.RegistrationsTotal.WithLabelValues("failure").Inc()
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to secure password"})
 	}
 
@@ -99,9 +105,11 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	if err := config.DB.Create(&newUser).Error; err != nil {
+		telemetry.RegistrationsTotal.WithLabelValues("failure").Inc()
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to create user"})
 	}
 
+	telemetry.RegistrationsTotal.WithLabelValues("success").Inc()
 	return c.Status(201).JSON(fiber.Map{
 		"message": "User registered successfully",
 		"user": fiber.Map{
@@ -115,16 +123,19 @@ func Register(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
+		telemetry.LoginsTotal.WithLabelValues("failure").Inc()
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Invalid request payload"})
 	}
 
 	var user models.User
 	if err := config.DB.Where("email = ? AND is_active = true", req.Email).First(&user).Error; err != nil {
+		telemetry.LoginsTotal.WithLabelValues("invalid_credentials").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "Invalid email or password"})
 	}
 
 	// Compare passwords
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		telemetry.LoginsTotal.WithLabelValues("invalid_credentials").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "Invalid email or password"})
 	}
 
@@ -143,6 +154,7 @@ func Login(c *fiber.Ctx) error {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessTokenString, err := accessToken.SignedString(jwtSecret)
 	if err != nil {
+		telemetry.LoginsTotal.WithLabelValues("failure").Inc()
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to generate tokens"})
 	}
 
@@ -161,9 +173,11 @@ func Login(c *fiber.Ctx) error {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshTokenString, err := refreshToken.SignedString(jwtSecret)
 	if err != nil {
+		telemetry.LoginsTotal.WithLabelValues("failure").Inc()
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to generate tokens"})
 	}
 
+	telemetry.LoginsTotal.WithLabelValues("success").Inc()
 	return c.JSON(fiber.Map{
 		"access_token":  accessTokenString,
 		"refresh_token": refreshTokenString,
@@ -178,6 +192,7 @@ func Login(c *fiber.Ctx) error {
 func Refresh(c *fiber.Ctx) error {
 	var req RefreshRequest
 	if err := c.BodyParser(&req); err != nil {
+		telemetry.TokenRefreshesTotal.WithLabelValues("failure").Inc()
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Invalid request payload"})
 	}
 
@@ -186,23 +201,27 @@ func Refresh(c *fiber.Ctx) error {
 	})
 
 	if err != nil || !token.Valid {
+		telemetry.TokenRefreshesTotal.WithLabelValues("failure").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "Invalid or expired refresh token"})
 	}
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok {
+		telemetry.TokenRefreshesTotal.WithLabelValues("failure").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "Invalid token claims"})
 	}
 
 	// Check if this refresh token Jti is blacklisted
 	isBlacklisted, err := config.RedisClient.Exists(context.Background(), "revoked_token:"+claims.Jti).Result()
 	if err == nil && isBlacklisted > 0 {
+		telemetry.TokenRefreshesTotal.WithLabelValues("revoked").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "Refresh token has been revoked"})
 	}
 
 	// Validate user is still active
 	var user models.User
 	if err := config.DB.First(&user, "id = ? AND is_active = true", claims.Subject).Error; err != nil {
+		telemetry.TokenRefreshesTotal.WithLabelValues("failure").Inc()
 		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized", "message": "User is no longer active"})
 	}
 
@@ -221,9 +240,11 @@ func Refresh(c *fiber.Ctx) error {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessTokenString, err := accessToken.SignedString(jwtSecret)
 	if err != nil {
+		telemetry.TokenRefreshesTotal.WithLabelValues("failure").Inc()
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to refresh token"})
 	}
 
+	telemetry.TokenRefreshesTotal.WithLabelValues("success").Inc()
 	return c.JSON(fiber.Map{
 		"access_token": accessTokenString,
 	})
@@ -243,12 +264,9 @@ func Logout(c *fiber.Ctx) error {
 
 	if token != nil {
 		if claims, ok := token.Claims.(*Claims); ok {
-			// Find remaining lifetime
 			expiresAt := claims.ExpiresAt.Time
 			timeRemaining := time.Until(expiresAt)
-
 			if timeRemaining > 0 {
-				// Blacklist JTI in Redis
 				config.RedisClient.Set(context.Background(), "revoked_token:"+claims.Jti, "revoked", timeRemaining)
 			}
 		}
@@ -270,6 +288,7 @@ func Logout(c *fiber.Ctx) error {
 		}
 	}
 
+	telemetry.LogoutsTotal.Inc()
 	return c.JSON(fiber.Map{"message": "Logged out successfully"})
 }
 

@@ -1,5 +1,9 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
 
 scrape_configs:
   - job_name: 'prometheus'
@@ -8,24 +12,35 @@ scrape_configs:
 
   - job_name: 'gateway'
     static_configs:
-      - targets: ['host.docker.internal:8000']
+      - targets: ['gateway:5000']
+    metrics_path: '/metrics'
 
   - job_name: 'auth-service'
     static_configs:
       - targets: ['host.docker.internal:8080']
+    metrics_path: '/metrics'
 
   - job_name: 'inventory-service'
     static_configs:
       - targets: ['host.docker.internal:8081']
+    metrics_path: '/metrics'
 
   - job_name: 'procurement-service'
     static_configs:
       - targets: ['host.docker.internal:8082']
+    metrics_path: '/metrics'
 
   - job_name: 'finance-service'
     static_configs:
       - targets: ['host.docker.internal:8083']
+    metrics_path: '/metrics'
 
   - job_name: 'intelligence-service'
     static_configs:
       - targets: ['host.docker.internal:8084']
+    metrics_path: '/metrics'
+
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: '/metrics'

@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"intelligence-service/telemetry"
+
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -56,6 +58,7 @@ type ForecastResult struct {
 }
 
 func GetForecast(c *fiber.Ctx) error {
+	telemetry.ForecastRequestsTotal.Inc()
 	// For demonstration of the Intelligence engine, we query inventory
 	// and calculate a mocked moving average and demand rate.
 	// In a real AI system, this would query a model endpoint or run a time-series DB aggregation.
@@ -98,6 +101,15 @@ func GetForecast(c *fiber.Ctx) error {
 			ActionRequired:        item.Quantity <= item.ReorderPoint,
 		})
 	}
+
+	var actionCount int
+	for _, f := range forecasts {
+		if f.ActionRequired {
+			actionCount++
+		}
+	}
+	telemetry.ForecastItemsReturned.Set(float64(len(forecasts)))
+	telemetry.ForecastActionRequiredItems.Set(float64(actionCount))
 
 	return c.JSON(forecasts)
 }

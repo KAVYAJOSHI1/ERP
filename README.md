@@ -46,19 +46,25 @@ Manages product catalogs and warehouse stock levels:
 ```
 .
 ├── backend/
-│   └── pkg/                  # Shared Go libraries (Kafka Outbox)
+│   ├── cmd/
+│   │   ├── iot-simulator/    # Go: 100-goroutine battery telemetry simulator
+│   │   └── iot-worker/       # Go: Kafka consumer, spike detection, DB + alert publish
+│   ├── pkg/                  # Shared Go libraries (Kafka Outbox)
 │   └── services/
 │       ├── auth/             # Go identity & session service
 │       ├── inventory/        # Go product & stock manager
 │       ├── procurement/      # Go automated purchasing service
 │       ├── finance/          # Go double-entry ledger & invoicing
 │       └── intelligence/     # Go demand forecasting service
-├── frontend/                 # Next.js 15 portal styled with a dark industrial theme
-├── gateway/                  # Node.js Express API Gateway
+├── docs/
+│   └── iot_telemetry.md      # IoT pipeline deep-dive
+├── frontend/                 # Next.js portal — dark industrial theme
+├── gateway/                  # Node.js Express API Gateway + WebSocket hub
 ├── infra/
+│   ├── kafka/topics.sh       # Topic provisioning (including iot.telemetry.battery)
 │   ├── postgres/init/        # Database schemas & seeds for each domain
-│   └── observability/        # Prometheus, Loki, Promtail, Grafana config
-├── docker-compose.yml        # Infrastructure (Postgres, Redis, MinIO, Kafka, Observability)
+│   └── observability/        # Prometheus, Grafana, Loki, Jaeger, alert rules
+├── docker-compose.yml        # Full stack: infra + gateway + IoT simulator + worker
 └── README.md
 ```
 

@@ -6,6 +6,7 @@ import (
 
 	"inventory-service/config"
 	"inventory-service/models"
+	"inventory-service/telemetry"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -79,6 +80,7 @@ func CreateProduct(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to create product"})
 	}
 
+	telemetry.ProductsCreatedTotal.Inc()
 	return c.Status(201).JSON(product)
 }
 
@@ -110,13 +112,13 @@ func CreateWarehouse(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to create warehouse"})
 	}
 
+	telemetry.WarehousesCreatedTotal.Inc()
 	return c.Status(201).JSON(warehouse)
 }
 
 func GetStockLevels(c *fiber.Ctx) error {
 	var stockLevels []models.StockLevel
-	
-	// Query params to filter
+
 	productID := c.Query("product_id")
 	warehouseID := c.Query("warehouse_id")
 
@@ -147,7 +149,7 @@ func SetReorderPoint(c *fiber.Ctx) error {
 
 	var stockLevel models.StockLevel
 	err := config.DB.Where("product_id = ? AND warehouse_id = ?", req.ProductID, req.WarehouseID).First(&stockLevel).Error
-	
+
 	if err == gorm.ErrRecordNotFound {
 		stockLevel = models.StockLevel{
 			ProductID:    req.ProductID,
@@ -183,7 +185,12 @@ func AdjustStock(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Product ID and Warehouse ID are required"})
 	}
 
-	correlationID := c.Get("X-Correlation-ID") // passed from gateway
+	adjustType := req.Type
+	if adjustType == "" {
+		adjustType = "adjustment"
+	}
+
+	correlationID := c.Get("X-Correlation-ID")
 	if correlationID == "" {
 		correlationID = "manual-adjust-no-trace"
 	}
@@ -200,7 +207,6 @@ func AdjustStock(c *fiber.Ctx) error {
 			First(&stockLevel).Error
 
 		if err == gorm.ErrRecordNotFound {
-			// Initialize new stock level
 			stockLevel = models.StockLevel{
 				ProductID:    req.ProductID,
 				WarehouseID:  req.WarehouseID,
@@ -270,7 +276,7 @@ func AdjustStock(c *fiber.Ctx) error {
 			return err
 		}
 
-		return nil // commit both writes atomically
+		return nil
 	})
 
 	if err != nil {
@@ -278,6 +284,11 @@ func AdjustStock(c *fiber.Ctx) error {
 			return c.Status(fiberErr.Code).JSON(fiber.Map{"error": "Bad Request", "message": fiberErr.Message})
 		}
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": err.Error()})
+	}
+
+	telemetry.StockAdjustmentsTotal.WithLabelValues(adjustType).Inc()
+	if finalStockLevel.Quantity <= finalStockLevel.ReorderPoint {
+		telemetry.ReorderAlertsTotal.Inc()
 	}
 
 	return c.JSON(fiber.Map{

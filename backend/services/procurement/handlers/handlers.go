@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"procurement-service/models"
+	"procurement-service/telemetry"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -72,12 +73,12 @@ func CreateVendor(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to create vendor"})
 	}
 
+	telemetry.VendorsCreatedTotal.Inc()
 	return c.Status(201).JSON(vendor)
 }
 
 func GetPurchaseOrders(c *fiber.Ctx) error {
 	var pos []models.PurchaseOrder
-	// Preload Vendor to show name in UI
 	if err := DB.Preload("Vendor").Order("created_at desc").Find(&pos).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to fetch purchase orders"})
 	}
@@ -119,7 +120,6 @@ func CreatePurchaseOrder(c *fiber.Ctx) error {
 	var finalPO models.PurchaseOrder
 
 	err := DB.Transaction(func(tx *gorm.DB) error {
-		// Calculate total amount
 		var totalAmount float64 = 0.0
 		for _, item := range req.LineItems {
 			totalAmount += item.Quantity * item.UnitPrice
@@ -137,7 +137,6 @@ func CreatePurchaseOrder(c *fiber.Ctx) error {
 			return err
 		}
 
-		// Save line items
 		for _, item := range req.LineItems {
 			lineItem := models.POLineItem{
 				POID:      po.ID,
@@ -150,7 +149,6 @@ func CreatePurchaseOrder(c *fiber.Ctx) error {
 			}
 		}
 
-		// Write to outbox
 		payload := PurchaseOrderCreatedPayload{
 			POID:          po.ID,
 			VendorID:      po.VendorID,
@@ -184,9 +182,9 @@ func CreatePurchaseOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": err.Error()})
 	}
 
-	// Reload PO with Vendor details
-	DB.Preload("Vendor").Preload("LineItems").First(&finalPO, "id = ?", finalPO.ID)
+	telemetry.PurchaseOrdersTotal.WithLabelValues("manual").Inc()
 
+	DB.Preload("Vendor").Preload("LineItems").First(&finalPO, "id = ?", finalPO.ID)
 	return c.Status(201).JSON(finalPO)
 }
 
@@ -229,7 +227,6 @@ func UpdatePurchaseOrderStatus(c *fiber.Ctx) error {
 			return err
 		}
 
-		// If status changes to received, we can emit a POReceived outbox event, or simply a generalized PurchaseOrderUpdated event
 		payload := fiber.Map{
 			"po_id":          po.ID,
 			"vendor_id":      po.VendorID,
@@ -264,8 +261,8 @@ func UpdatePurchaseOrderStatus(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": err.Error()})
 	}
 
-	// Reload PO with Vendor details
-	DB.Preload("Vendor").Preload("LineItems").First(&po, "id = ?", po.ID)
+	telemetry.PurchaseOrderStatusUpdatesTotal.WithLabelValues(req.Status).Inc()
 
+	DB.Preload("Vendor").Preload("LineItems").First(&po, "id = ?", po.ID)
 	return c.JSON(po)
 }

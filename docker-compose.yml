@@ -73,6 +73,12 @@ services:
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -130,6 +136,82 @@ services:
       - ./infra/observability/promtail/promtail-config.yml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
 
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: erp-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BROKERS=kafka:29092
+      - AUTH_SERVICE_URL=http://host.docker.internal:8080
+      - INVENTORY_SERVICE_URL=http://host.docker.internal:8081
+      - PROCUREMENT_SERVICE_URL=http://host.docker.internal:8082
+      - FINANCE_SERVICE_URL=http://host.docker.internal:8083
+      - INTELLIGENCE_SERVICE_URL=http://host.docker.internal:8084
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # IoT Telemetry Simulator Service
+  iot-simulator:
+    build:
+      context: ./backend
+      dockerfile: ./cmd/iot-simulator/Dockerfile
+    container_name: erp-iot-simulator
+    environment:
+      - GATEWAY_URL=http://gateway:5000/api/iot/telemetry
+      - SIMULATION_SPEED_MS=2000 # Sends payload every 2 seconds
+      - TOTAL_PALLETS=10
+    depends_on:
+      kafka:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+    restart: unless-stopped
+
+  iot-worker:
+    build:
+      context: ./backend/cmd/iot-worker
+      dockerfile: Dockerfile
+    container_name: erp-iot-worker
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=erp_user
+      - DB_PASSWORD=erp_password
+      - DB_NAME=erp_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: erp-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP Collector (legacy)
+      - "14250:14250"  # gRPC Collector
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+    volumes:
+      - jaeger_data:/tmp
+
 volumes:
   postgres_data:
   redis_data:
@@ -138,3 +220,4 @@ volumes:
   prometheus_data:
   grafana_data:
   loki_data:
+  jaeger_data:

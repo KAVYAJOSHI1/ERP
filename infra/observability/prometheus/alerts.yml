@@ -1,0 +1,70 @@
+groups:
+  - name: erp_service_health
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for more than 30 seconds."
+
+      - alert: HighHTTPErrorRate
+        expr: |
+          (
+            sum by (service) (rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum by (service) (rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} is returning >5% server errors over the last 5 minutes."
+
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum by (service, le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P95 latency on {{ $labels.service }}"
+          description: "P95 response time on {{ $labels.service }} exceeds 500ms."
+
+  - name: erp_business_alerts
+    interval: 60s
+    rules:
+      - alert: SuspiciousLoginFailureRate
+        expr: rate(erp_auth_logins_total{status="invalid_credentials"}[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated login failure rate - possible brute force"
+          description: "More than 0.5 failed logins/second over the last 5 minutes."
+
+      - alert: StockReorderBacklog
+        expr: erp_intelligence_action_required_items > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of products needing procurement action"
+          description: "{{ $value }} products are at or below their reorder point."
+
+      - alert: OutboxRelayStalled
+        expr: |
+          increase(http_requests_total{job="inventory-service", path="/metrics"}[10m]) == 0
+          and on() hour() > 8
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Outbox relay worker may be stalled"
+          description: "No activity detected from inventory-service for 10 minutes during business hours."

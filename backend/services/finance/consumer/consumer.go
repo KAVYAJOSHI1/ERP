@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"finance-service/models"
+	"finance-service/telemetry"
 
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -132,8 +133,10 @@ func (c *FinanceConsumer) handleMessage(ctx context.Context, msg kafka.Message) 
 		})
 		if err != nil {
 			log.Printf("[Finance Consumer] Failed to upload PDF to MinIO: %v", err)
+			telemetry.InvoicePDFUploadsTotal.WithLabelValues("failure").Inc()
 			return err
 		}
+		telemetry.InvoicePDFUploadsTotal.WithLabelValues("success").Inc()
 
 		pdfURL := fmt.Sprintf("http://localhost:9000/%s/%s", c.bucketName, objectName)
 
@@ -194,6 +197,10 @@ func (c *FinanceConsumer) handleMessage(ctx context.Context, msg kafka.Message) 
 			return err
 		}
 
+		telemetry.InvoicesTotal.WithLabelValues("success").Inc()
+		telemetry.LedgerEntriesTotal.Add(2) // one debit + one credit per PO
+		telemetry.InvoicedAmountTotal.Add(payload.TotalAmount)
+
 		// 5. Mark Event Processed
 		processedEvent := models.ProcessedEvent{
 			EventID:     eventID,
@@ -209,6 +216,7 @@ func (c *FinanceConsumer) handleMessage(ctx context.Context, msg kafka.Message) 
 
 	if err != nil {
 		log.Printf("[Finance Consumer] Transaction failed: %v", err)
+		telemetry.InvoicesTotal.WithLabelValues("failure").Inc()
 	}
 }
 

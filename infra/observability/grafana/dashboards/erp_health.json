@@ -1,210 +1,130 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
-  },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": null,
+  "title": "Smart ERP Health Dashboard",
+  "uid": "erp-health",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "15s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "browser",
+  "tags": ["erp", "health"],
+  "graphTooltip": 1,
+  "annotations": { "list": [] },
   "links": [],
-  "liveNow": false,
+  "templating": { "list": [] },
   "panels": [
     {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Service Memory Allocations (Go)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "datasource": "Prometheus",
+      "targets": [
+        { "expr": "go_memstats_alloc_bytes{job=~\"auth-service|inventory-service|procurement-service|finance-service|intelligence-service\"}", "legendFormat": "{{ job }}", "refId": "A" }
+      ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 },
           "unit": "bytes"
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "go_memstats_alloc_bytes",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{job}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Service Memory Allocations (Go)",
-      "type": "timeseries"
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
     },
     {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Active Goroutines",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "datasource": "Prometheus",
+      "targets": [
+        { "expr": "go_goroutines{job=~\"auth-service|inventory-service|procurement-service|finance-service|intelligence-service\"}", "legendFormat": "{{ job }}", "refId": "A" }
+      ],
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "HTTP Request Rate per Service",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
       "targets": [
-        {
-          "datasource": "Prometheus",
-          "expr": "go_goroutines",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{job}}",
-          "refId": "A"
-        }
+        { "expr": "sum by (service) (rate(http_requests_total[2m]))", "legendFormat": "{{ service }}", "refId": "A" }
       ],
-      "title": "Active Goroutines",
-      "type": "timeseries"
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 8 },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "HTTP P95 Latency (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (service, le) (rate(http_request_duration_seconds_bucket[2m]))) * 1000", "legendFormat": "{{ service }}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 5 },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Go GC Cycles per Minute",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(go_gc_duration_seconds_count{job=~\"auth-service|inventory-service|procurement-service|finance-service|intelligence-service\"}[2m]) * 60", "legendFormat": "{{ job }}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 8 },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Go Process CPU Usage",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(process_cpu_seconds_total{job=~\"auth-service|inventory-service|procurement-service|finance-service|intelligence-service\"}[2m])", "legendFormat": "{{ job }}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 8 },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
     }
-  ],
-  "refresh": "5s",
-  "schemaVersion": 30,
-  "style": "dark",
-  "tags": [
-    "erp",
-    "metrics"
-  ],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-15m",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "",
-  "title": "Smart ERP Health Dashboard",
-  "uid": "erp-health-01",
-  "version": 1
+  ]
 }

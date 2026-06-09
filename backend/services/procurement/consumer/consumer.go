@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"procurement-service/models"
+	"procurement-service/telemetry"
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
@@ -227,6 +228,9 @@ func (c *StockConsumer) handleMessage(ctx context.Context, msg kafka.Message) {
 
 		log.Printf("[Procurement Consumer] Automatically generated PO %s for Product %s (Qty: %.2f, Total: %.2f %s) with Vendor %s",
 			po.ID, payload.ProductID, orderQty, totalAmount, po.Currency, vendor.Name)
+
+		telemetry.PurchaseOrdersTotal.WithLabelValues("auto").Inc()
+		telemetry.AutoReorderTriggersTotal.Inc()
 
 		return nil
 	})

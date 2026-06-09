@@ -18,6 +18,7 @@ topics=(
   "erp.finance.invoice-generated"
   "erp.intelligence.reorder-recommended"
   "erp.audit.all-events"
+  "inventory.alerts.critical"
 )
 
 for topic in "${topics[@]}"; do
@@ -28,5 +29,13 @@ for topic in "${topics[@]}"; do
     --replication-factor 1 \
     --if-not-exists
 done
+
+# iot.telemetry.battery uses 3 partitions for high-throughput ingestion
+echo "Creating topic: iot.telemetry.battery (3 partitions)"
+docker exec erp-kafka kafka-topics --bootstrap-server localhost:9092 \
+  --create --topic iot.telemetry.battery \
+  --partitions 3 \
+  --replication-factor 1 \
+  --if-not-exists
 
 echo "All topics created successfully!"

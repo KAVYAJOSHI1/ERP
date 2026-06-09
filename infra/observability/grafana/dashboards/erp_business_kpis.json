@@ -1,0 +1,499 @@
+{
+  "title": "ERP Business KPIs",
+  "uid": "erp-business-kpis",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "tags": ["erp", "business"],
+  "graphTooltip": 1,
+  "annotations": { "list": [] },
+  "links": [],
+  "templating": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Auth & Identity",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Successful Logins (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_auth_logins_total{status=\"success\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Failed Logins (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_auth_logins_total{status=\"invalid_credentials\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 10 }, { "color": "red", "value": 50 } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "New Registrations (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_auth_registrations_total{status=\"success\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Token Refreshes (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_auth_token_refreshes_total{status=\"success\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Login Attempts Over Time",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(erp_auth_logins_total{status=\"success\"}[5m])", "legendFormat": "Success", "refId": "A" },
+        { "expr": "rate(erp_auth_logins_total{status=\"invalid_credentials\"}[5m])", "legendFormat": "Invalid Credentials", "refId": "B" },
+        { "expr": "rate(erp_auth_logins_total{status=\"failure\"}[5m])", "legendFormat": "System Failure", "refId": "C" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 },
+          "unit": "reqps"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Success" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "Invalid Credentials" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "Inventory",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "collapsed": false
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Stock Adjustments (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_inventory_stock_adjustments_total[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Reorder Alerts Triggered (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_inventory_reorder_alerts_total[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Products Created (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_inventory_products_created_total", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Warehouses Created (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_inventory_warehouses_created_total", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Stock Adjustments by Type",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(erp_inventory_stock_adjustments_total[5m])", "legendFormat": "{{ type }}", "refId": "A" },
+        { "expr": "rate(erp_inventory_reorder_alerts_total[5m])", "legendFormat": "reorder_alert", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 },
+          "unit": "ops"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "reorder_alert" }, "properties": [ { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } } ] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "Procurement",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Manual POs Created (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 27 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_procurement_purchase_orders_total{source=\"manual\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Auto-Reorder POs (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 27 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_procurement_purchase_orders_total{source=\"auto\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Vendors Created (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 27 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_procurement_vendors_created_total", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Auto-Reorder Triggers (all time)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 27 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_procurement_auto_reorder_triggers_total", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Purchase Order Activity",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 31 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(erp_procurement_purchase_orders_total{source=\"manual\"}[5m])", "legendFormat": "Manual POs", "refId": "A" },
+        { "expr": "rate(erp_procurement_purchase_orders_total{source=\"auto\"}[5m])", "legendFormat": "Auto Reorder POs", "refId": "B" },
+        { "expr": "rate(erp_procurement_purchase_order_status_updates_total[5m])", "legendFormat": "Status: {{ status }}", "refId": "C" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Finance & Invoicing",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "collapsed": false
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Invoices Generated (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 40 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_finance_invoices_total{status=\"success\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Ledger Entries (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 40 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_finance_ledger_entries_total[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Total Invoiced Amount (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 40 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_finance_invoiced_amount_total[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "PDF Upload Failures (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 40 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_finance_invoice_pdf_uploads_total{status=\"failure\"}[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 24,
+      "type": "row",
+      "title": "Intelligence & Forecasting",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
+      "collapsed": false
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Forecast Requests (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 45 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "increase(erp_intelligence_forecast_requests_total[1h])", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Products in Forecast",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 45 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_intelligence_forecast_items_returned", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Products Needing Action NOW",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 45 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "erp_intelligence_action_required_items", "legendFormat": "", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 10 } ] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "justifyMode": "center", "textMode": "value_and_name" }
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "Demand Intelligence Activity",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 49 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(erp_intelligence_forecast_requests_total[5m])", "legendFormat": "Forecast Requests/sec", "refId": "A" },
+        { "expr": "erp_intelligence_action_required_items", "legendFormat": "Products Needing Action", "refId": "B" },
+        { "expr": "erp_intelligence_forecast_items_returned", "legendFormat": "Products in Forecast", "refId": "C" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    }
+  ]
+}

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
+import { useTelemetrySocket } from '@/hooks/useTelemetrySocket';
+import CriticalAlertBanner from './CriticalAlertBanner';
 import { 
   LayoutDashboard, 
   Warehouse, 
@@ -43,6 +45,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  useTelemetrySocket();
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -73,6 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#090d16]">
+      <CriticalAlertBanner />
       {/* Mobile Top Bar */}
       <div className="flex h-16 w-full items-center justify-between border-b border-slate-800 bg-[#0f172a]/80 px-4 md:hidden fixed top-0 left-0 z-30 backdrop-blur-md">
         <div className="flex items-center space-x-2">
