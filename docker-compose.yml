@@ -164,8 +164,8 @@ services:
   # IoT Telemetry Simulator Service
   iot-simulator:
     build:
-      context: ./backend
-      dockerfile: ./cmd/iot-simulator/Dockerfile
+      context: ./backend/cmd/iot-simulator
+      dockerfile: Dockerfile
     container_name: erp-iot-simulator
     environment:
       - GATEWAY_URL=http://gateway:5000/api/iot/telemetry

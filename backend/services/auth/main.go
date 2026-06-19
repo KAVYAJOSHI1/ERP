@@ -57,6 +57,7 @@ func main() {
 	app.Post("/auth/refresh", handlers.Refresh)
 	app.Post("/auth/logout", handlers.Logout)
 	app.Get("/auth/me", handlers.UserMe)
+	app.Get("/auth/users", handlers.GetUsers)
 
 	port := os.Getenv("AUTH_SERVICE_PORT")
 	if port == "" {

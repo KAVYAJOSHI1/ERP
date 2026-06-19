@@ -18,7 +18,9 @@ import {
   User,
   Shield,
   Menu,
-  X
+  X,
+  Users,
+  Activity
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -36,6 +38,8 @@ const sidebarItems: SidebarItem[] = [
   { name: 'Finance & Ledger', href: '/finance', icon: Coins, roles: ['admin', 'finance_manager', 'viewer'] },
   { name: 'AI Intelligence', href: '/intelligence', icon: BrainCircuit, roles: ['admin', 'warehouse_manager', 'procurement_manager', 'production_manager', 'finance_manager', 'viewer'] },
   { name: 'Audit Logs', href: '/audit', icon: FileCheck2, roles: ['admin', 'viewer'] },
+  { name: 'User Directory', href: '/users', icon: Users, roles: ['admin', 'viewer'] },
+  { name: 'System Observability', href: '/observability', icon: Activity, roles: ['admin', 'viewer'] },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

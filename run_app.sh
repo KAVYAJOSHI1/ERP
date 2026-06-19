@@ -38,6 +38,12 @@ go run main.go > ../../../intelligence.log 2>&1 &
 echo $! > ../../../intelligence.pid
 cd ../../../
 
+echo "Starting Production Service..."
+cd backend/services/production
+go run . > ../../../production.log 2>&1 &
+echo $! > ../../../production.pid
+cd ../../../
+
 echo "Starting Frontend..."
 cd frontend
 npm run dev > ../frontend.log 2>&1 &

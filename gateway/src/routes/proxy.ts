@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { authMiddleware } from '../middleware/auth';
 import { rbacMiddleware } from '../middleware/rbac';
 
@@ -10,6 +10,7 @@ const INVENTORY_SERVICE_URL = process.env.INVENTORY_SERVICE_URL || 'http://local
 const PROCUREMENT_SERVICE_URL = process.env.PROCUREMENT_SERVICE_URL || 'http://localhost:8082';
 const FINANCE_SERVICE_URL = process.env.FINANCE_SERVICE_URL || 'http://localhost:8083';
 const INTELLIGENCE_SERVICE_URL = process.env.INTELLIGENCE_SERVICE_URL || 'http://localhost:8084';
+const PRODUCTION_SERVICE_URL = process.env.PRODUCTION_SERVICE_URL || 'http://localhost:8085';
 // Helper to configure proxy forwarding and headers injection
 const createServiceProxy = (target: string, pathRewritePattern: string) => {
   return createProxyMiddleware({
@@ -30,6 +31,9 @@ const createServiceProxy = (target: string, pathRewritePattern: string) => {
           proxyReq.setHeader('X-User-Email', req.user.email);
           proxyReq.setHeader('X-User-Role', req.user.role);
         }
+
+        // Fix for body parser stream consumption - must be called after all headers are set
+        fixRequestBody(proxyReq, req);
       },
       error: (err, req, res: any) => {
         console.error(`Proxy error forwarding to target ${target}:`, err);
@@ -107,6 +111,20 @@ router.get(
   authMiddleware, 
   rbacMiddleware(['admin', 'warehouse_manager', 'procurement_manager', 'production_manager', 'finance_manager', 'viewer']), 
   createServiceProxy(INTELLIGENCE_SERVICE_URL, '^/api')
+);
+
+// 7. Production Service Routing
+router.get(
+  '/production*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'production_manager', 'viewer']), 
+  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
+);
+router.post(
+  '/production*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'production_manager']), 
+  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
 );
 
 export default router;

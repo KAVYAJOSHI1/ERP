@@ -4,7 +4,8 @@ use (
 	./backend/pkg
 	./backend/services/auth
 	./backend/services/finance
+	./backend/services/intelligence
 	./backend/services/inventory
 	./backend/services/procurement
-	./backend/services/intelligence
+	./backend/services/production
 )

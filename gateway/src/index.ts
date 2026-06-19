@@ -45,7 +45,7 @@ const metricsMiddleware = promBundle({
     collectDefaultMetrics: {}
   }
 });
-app.use(metricsMiddleware);
+app.use(metricsMiddleware as any);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

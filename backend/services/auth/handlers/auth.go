@@ -308,3 +308,24 @@ func UserMe(c *fiber.Ctx) error {
 		"role":  userRole,
 	})
 }
+
+// GetUsers returns the list of all registered users
+func GetUsers(c *fiber.Ctx) error {
+	var users []models.User
+	if err := config.DB.Find(&users).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to fetch users"})
+	}
+
+	var response []fiber.Map
+	for _, user := range users {
+		response = append(response, fiber.Map{
+			"id":         user.ID,
+			"email":      user.Email,
+			"role":       user.Role,
+			"is_active":  user.IsActive,
+			"created_at": user.CreatedAt,
+		})
+	}
+	return c.JSON(response)
+}
+
