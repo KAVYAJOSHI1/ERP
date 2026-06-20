@@ -1,25 +1,41 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { UserClaims } from './auth';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_change_me_in_production';
 
 /**
- * Middleware factory to restrict endpoints to specific user roles
- * @param allowedRoles Array of strings corresponding to roles (e.g. ['admin', 'procurement_manager'])
+ * requireRole middleware extracts JWT from Authorization header,
+ * decodes the user.role, and returns 403 Forbidden if the role does not match the allowed array.
  */
-export function rbacMiddleware(allowedRoles: string[]) {
+export function requireRole(allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    // If request path is public, it skips auth, so req.user might be undefined
-    // For protected routes, this runs after authMiddleware.
-    if (!req.user) {
-      res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'Authentication is required for this resource' 
-      });
+    let role = req.user?.role;
+
+    if (!role) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as UserClaims;
+          role = decoded.role;
+          req.user = decoded;
+        } catch (error) {
+          res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired token' });
+          return;
+        }
+      }
+    }
+
+    if (!role) {
+      res.status(401).json({ error: 'Unauthorized', message: 'Authentication is required' });
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!allowedRoles.includes(role)) {
       res.status(403).json({
         error: 'Forbidden',
-        message: `Access denied. Role '${req.user.role}' does not have permission.`,
+        message: `Access denied. Role '${role}' does not have permission.`,
         correlationId: req.correlationId
       });
       return;
@@ -28,3 +44,7 @@ export function rbacMiddleware(allowedRoles: string[]) {
     next();
   };
 }
+
+// Alias for backwards compatibility
+export const rbacMiddleware = requireRole;
+

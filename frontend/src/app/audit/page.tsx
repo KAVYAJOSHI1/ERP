@@ -7,9 +7,6 @@ import {
   Terminal, 
   Search, 
   Filter, 
-  Database, 
-  Cpu, 
-  ShieldCheck, 
   ArrowDownToLine,
   RefreshCw,
   Info
@@ -175,23 +172,23 @@ export default function AuditPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const getServiceColor = (service: string) => {
+  const getServiceBadge = (service: string) => {
     switch (service) {
-      case 'inventory': return 'text-cyan-400 border-cyan-950 bg-cyan-950/20';
-      case 'procurement': return 'text-indigo-400 border-indigo-950 bg-indigo-950/20';
-      case 'finance': return 'text-emerald-400 border-emerald-950 bg-emerald-950/20';
-      case 'auth': return 'text-purple-400 border-purple-950 bg-purple-950/20';
+      case 'inventory': return <span className="badge badge-info">Inventory</span>;
+      case 'procurement': return <span className="badge badge-info">Procurement</span>;
+      case 'finance': return <span className="badge badge-success">Finance</span>;
+      case 'auth': return <span className="badge badge-neutral">Auth</span>;
       case 'system':
-      default: return 'text-slate-400 border-slate-900 bg-slate-900/30';
+      default: return <span className="badge badge-neutral">System</span>;
     }
   };
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'text-rose-400 bg-rose-950/20 border-rose-900/30';
-      case 'warning': return 'text-amber-400 bg-amber-950/20 border-amber-900/30';
+      case 'critical': return <span className="badge badge-danger">Critical</span>;
+      case 'warning': return <span className="badge badge-warning">Warning</span>;
       case 'info':
-      default: return 'text-slate-400 bg-slate-900 border-slate-800';
+      default: return <span className="badge badge-neutral">Info</span>;
     }
   };
 
@@ -209,54 +206,56 @@ export default function AuditPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
+        
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black tracking-wider text-slate-100 uppercase">
+            <h1 className="text-lg font-bold text-[#1e293b] flex items-center gap-2">
+              <FileCheck2 className="h-5 w-5 text-[#1e3a5f]" />
               Distributed Transaction Audit Trail
             </h1>
-            <p className="text-xs font-semibold text-slate-400 mt-1 uppercase tracking-wider">
+            <p className="text-[12px] text-[#64748b] mt-0.5">
               Verify outbox logs, trace correlation IDs across microservices, and inspect raw event payloads
             </p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex gap-2">
             <button 
               onClick={() => alert("Audit trail exported successfully as JSON.")}
-              className="flex items-center space-x-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 px-4 py-2.5 text-xs font-bold text-slate-300 transition-all cursor-pointer"
+              className="btn-secondary"
             >
-              <ArrowDownToLine className="h-4 w-4 text-cyan-400" />
-              <span>EXPORT AUDIT TRAIL</span>
+              <ArrowDownToLine className="h-3.5 w-3.5" />
+              <span>Export Trail</span>
             </button>
             <button 
               onClick={() => window.location.reload()}
-              className="flex items-center space-x-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 border border-cyan-500/20 px-4 py-2.5 text-xs font-bold text-slate-950 transition-all cursor-pointer"
+              className="btn-primary"
             >
-              <RefreshCw className="h-4 w-4" />
-              <span>REFRESH TRAIL</span>
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Refresh Trail</span>
             </button>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="glass-panel border border-slate-800 rounded-xl p-5 flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3.5 top-3 h-4.5 w-4.5 text-slate-500" />
+        <div className="bg-white border border-[#e2e8f0] rounded-sm p-4 flex flex-col md:flex-row gap-4 justify-between">
+          <div className="flex-1 relative max-w-lg">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
             <input 
               type="text" 
               placeholder="Search by action, details, or Correlation ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full rounded-lg border border-slate-850 bg-slate-950/40 pl-11 pr-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500"
+              className="pl-9"
             />
           </div>
           <div className="flex flex-wrap gap-3">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-slate-500" />
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-[#64748b]" />
               <select 
                 value={selectedService} 
                 onChange={(e) => setSelectedService(e.target.value)}
-                className="rounded-lg border border-slate-850 bg-slate-950/40 px-3 py-2 text-xs font-bold uppercase text-slate-400"
+                className="!py-1.5 !px-2.5 !text-xs font-bold"
               >
                 <option value="all">ALL SERVICES</option>
                 <option value="inventory">INVENTORY</option>
@@ -270,7 +269,7 @@ export default function AuditPage() {
               <select 
                 value={selectedSeverity} 
                 onChange={(e) => setSelectedSeverity(e.target.value)}
-                className="rounded-lg border border-slate-850 bg-slate-950/40 px-3 py-2 text-xs font-bold uppercase text-slate-400"
+                className="!py-1.5 !px-2.5 !text-xs font-bold"
               >
                 <option value="all">ALL SEVERITIES</option>
                 <option value="info">INFO</option>
@@ -282,60 +281,56 @@ export default function AuditPage() {
         </div>
 
         {/* Logs Console */}
-        <div className="glass-panel border border-slate-800 rounded-xl p-5 space-y-4">
-          <div className="flex items-center space-x-2 pb-3 border-b border-slate-800/80">
-            <Terminal className="h-5 w-5 text-cyan-400" />
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Distributed Outbox Terminal Logs</h2>
+        <div className="bg-white border border-[#e2e8f0] rounded-sm p-5">
+          <div className="flex items-center gap-2 pb-3 mb-4 border-b border-[#f1f5f9]">
+            <Terminal className="h-4 w-4 text-[#1e3a5f]" />
+            <h2 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">Distributed Outbox Terminal Logs</h2>
           </div>
           <div className="space-y-3">
             {filteredLogs.length === 0 ? (
-              <div className="py-20 text-center text-xs text-slate-500 uppercase tracking-widest font-bold">No matching audit logs found.</div>
+              <div className="py-8 text-center text-[12px] text-[#94a3b8]">No matching audit logs found.</div>
             ) : (
               filteredLogs.map(log => (
                 <div 
                   key={log.id} 
-                  className="rounded-lg bg-slate-950/30 border border-slate-900 p-4 transition-all hover:bg-slate-900/5"
+                  className="p-3.5 bg-[#f8fafc] border border-[#f1f5f9] rounded-sm hover:border-[#cbd5e1] transition-colors"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-900/40">
-                    <div className="flex items-center space-x-3">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${getServiceColor(log.service)}`}>
-                        {log.service}
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${getSeverityBadge(log.severity)}`}>
-                        {log.severity}
-                      </span>
-                      <span className="text-xs font-bold text-slate-200">{log.action}</span>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-[#e2e8f0]/60">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {getServiceBadge(log.service)}
+                      {getSeverityBadge(log.severity)}
+                      <span className="text-[13px] font-bold text-[#1e293b] ml-1">{log.action}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-500 font-medium">
+                    <span className="text-[11px] font-mono text-[#64748b]">
                       {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>
                   <div className="pt-3 flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <p className="text-xs text-slate-300 font-semibold">{log.details}</p>
-                      <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500">
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[13px] text-[#475569] font-medium">{log.details}</p>
+                      <div className="flex items-center gap-1 text-[10px] font-mono text-[#64748b]">
                         <span>CORRELATION ID:</span>
-                        <span className="text-cyan-400/80 font-bold">{log.correlationId}</span>
+                        <span className="text-[#1e3a5f] font-bold">{log.correlationId}</span>
                       </div>
                     </div>
                     <div>
                       <button 
                         onClick={() => setShowPayloadId(showPayloadId === log.id ? null : log.id)}
-                        className="flex items-center space-x-1.5 text-[10px] font-bold text-slate-400 hover:text-cyan-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded transition-all cursor-pointer"
+                        className="btn-secondary !py-1 !px-2.5 !text-[10px]"
                       >
                         <Info className="h-3.5 w-3.5" />
-                        <span>{showPayloadId === log.id ? "HIDE PAYLOAD" : "INSPECT PAYLOAD"}</span>
+                        <span>{showPayloadId === log.id ? "Hide Payload" : "Inspect Payload"}</span>
                       </button>
                     </div>
                   </div>
 
                   {showPayloadId === log.id && (
-                    <div className="mt-4 p-4 rounded-lg bg-slate-950/80 border border-slate-850/85">
-                      <div className="flex justify-between items-center pb-2 mb-2 border-b border-slate-900">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono">Raw Outbox JSON payload</span>
-                        <span className="text-[9px] font-mono text-slate-600">ID: {log.id}</span>
+                    <div className="mt-3 p-4 rounded-sm bg-white border border-[#e2e8f0]">
+                      <div className="flex justify-between items-center pb-2 mb-2 border-b border-[#f1f5f9]">
+                        <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-widest font-mono">Raw Outbox JSON payload</span>
+                        <span className="text-[9px] font-mono text-[#94a3b8]">ID: {log.id}</span>
                       </div>
-                      <pre className="text-xs text-cyan-400/90 font-mono overflow-x-auto whitespace-pre-wrap">{log.payload}</pre>
+                      <pre className="text-[11px] text-[#b91c1c] font-mono overflow-x-auto whitespace-pre-wrap">{log.payload}</pre>
                     </div>
                   )}
                 </div>

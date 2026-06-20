@@ -3,8 +3,9 @@ package config
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -31,11 +32,22 @@ func ConnectRedis() {
 		DB:       0,
 	})
 
-	_, err := rdb.Ping(Ctx).Result()
-	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+	var err error
+	for i := 1; i <= 5; i++ {
+		slog.Info("Connecting to Redis", "attempt", i, "address", addr)
+		_, err = rdb.Ping(Ctx).Result()
+		if err == nil {
+			break
+		}
+		slog.Warn("Failed to connect to Redis, retrying...", "error", err, "attempt", i, "next_attempt_in", "2s")
+		time.Sleep(2 * time.Second)
 	}
 
-	log.Printf("Successfully connected to Redis at %s", addr)
+	if err != nil {
+		slog.Error("Redis connection failed", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("Successfully connected to Redis", "address", addr)
 	RedisClient = rdb
 }

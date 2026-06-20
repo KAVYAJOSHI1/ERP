@@ -1,87 +1,351 @@
 @import "tailwindcss";
 
-:root {
-  --background: #040914; /* Deep, rich space blue */
-  --foreground: #f8fafc;
-  
-  --accent-primary: #0ea5e9; /* Sky blue */
-  --accent-secondary: #8b5cf6; /* Violet */
-  --accent-success: #10b981; /* Emerald */
-  --accent-warning: #f59e0b; /* Amber */
-  --accent-danger: #ef4444; /* Red */
-  
-  --border-subtle: rgba(30, 41, 59, 0.7);
-  --border-glow: rgba(14, 165, 233, 0.3);
-  
-  --card-bg: rgba(11, 17, 32, 0.65);
-  --card-bg-hover: rgba(15, 23, 42, 0.85);
+/* ============================================================================
+   APEX ERP — Enterprise Design System
+   ============================================================================
+   A formal, high-readability design system built for 8-hour shift operators.
+   Modeled after SAP Fiori, Oracle Fusion, and Microsoft Dynamics 365.
+   
+   Principles:
+   - Light background (#f8f9fb) to reduce eye strain
+   - Pure white cards for maximum data contrast
+   - Deep navy primary for trust & authority
+   - No neon, no glow, no glassmorphism
+   - Sharp corners, crisp 1px borders, flat shadows
+   - Tabular-lining numerals in all data fields
+   ============================================================================ */
+
+@theme {
+  /* Semantic color tokens */
+  --color-background: #f8f9fb;
+  --color-foreground: #111827;
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-primary: #1e3a5f;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #334155;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #1e293b;
+  --color-destructive: #b91c1c;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #1e3a5f;
+
+  /* Radius: tight & professional */
+  --radius-lg: 3px;
+  --radius-md: 2px;
+  --radius-sm: 1px;
+
+  /* Shadows: barely visible, depth cue only */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-default: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 6px -1px rgba(0, 0, 0, 0.06);
 }
 
+:root {
+  /* Legacy variable fallbacks (used by .glass-panel and inline classes) */
+  --border-subtle: #e2e8f0;
+  --card-bg: #ffffff;
+  --card-bg-hover: #f8fafc;
+  --accent-primary: #1e3a5f;
+}
+
+/* ---- Base ---- */
+
 body {
-  background: radial-gradient(circle at top, #09152b 0%, var(--background) 100%);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
+  background-color: #f8f9fb;
+  color: #111827;
+  font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
   padding: 0;
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base Glassmorphism */
+/* ---- Typography ---- */
+
+h1, h2, h3, h4, h5, h6 {
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Data Tables ---- */
+
+table {
+  font-variant-numeric: tabular-nums;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  font-weight: 600;
+  color: #475569;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e2e8f0;
+  background-color: #f8fafc;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #334155;
+}
+
+tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* ---- Card Panels (replaces glass-panel) ---- */
+
 .glass-panel {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 }
 
 .glass-panel:hover {
-  background: var(--card-bg-hover);
-  border-color: var(--border-glow);
-  box-shadow: 0 10px 40px -10px rgba(14, 165, 233, 0.25);
-  transform: translateY(-2px);
+  background-color: #ffffff;
+  border-color: #cbd5e1;
 }
 
 .glass-panel-accent {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--accent-primary);
-  box-shadow: 0 0 20px var(--border-glow), inset 0 0 20px rgba(14, 165, 233, 0.1);
+  background-color: #ffffff;
+  border: 1px solid #1e3a5f;
+  border-radius: 3px;
 }
 
-/* Animations */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-  50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+/* ---- Form Controls ---- */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  font-family: inherit;
+  font-size: 13px;
+  color: #1e293b;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 2px;
+  padding: 7px 10px;
+  transition: border-color 0.15s ease;
+  outline: none;
+  width: 100%;
 }
 
-.live-indicator {
-  animation: pulse-glow 2s infinite ease-in-out;
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #1e3a5f;
+  box-shadow: 0 0 0 1px rgba(30, 58, 95, 0.15);
 }
 
-/* Typography Enhancements */
-.text-gradient {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
 }
 
-/* Custom Scrollbar */
+/* ---- Buttons ---- */
+
+/* Primary: solid navy */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background-color: #1e3a5f;
+  border: 1px solid #1e3a5f;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-primary:hover {
+  background-color: #15304f;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Secondary: outlined */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+/* Destructive: dark red */
+.btn-destructive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  background-color: #b91c1c;
+  border: 1px solid #b91c1c;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-destructive:hover {
+  background-color: #991b1b;
+}
+.btn-destructive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Status Badges ---- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.badge-success {
+  color: #166534;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-warning {
+  color: #92400e;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.badge-danger {
+  color: #991b1b;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.badge-info {
+  color: #1e3a5f;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-neutral {
+  color: #475569;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* ---- Section Headers ---- */
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+/* ---- Field Labels ---- */
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+/* ---- Alert Banner (Critical / IoT) ---- */
+
+.alert-banner-critical {
+  background-color: #fef2f2;
+  border-bottom: 2px solid #dc2626;
+  color: #991b1b;
+}
+
+/* ---- Scrollbar ---- */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(4, 9, 20, 0.8);
+  background: #f8f9fb;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(30, 41, 59, 0.8);
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-primary);
+  background: #94a3b8;
+}
+
+/* ---- Utility: Monospace data values ---- */
+
+.mono {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+}
+
+/* ---- Live indicator (simple green dot) ---- */
+
+.live-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a;
 }

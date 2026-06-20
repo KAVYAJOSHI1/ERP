@@ -1,43 +1,28 @@
 package config
 
 import (
-	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
-	"gorm.io/driver/postgres"
+	"backend/pkg/database"
 	"gorm.io/gorm"
-	"gorm.io/gorm/schema"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-	dbSSL := os.Getenv("DB_SSLMODE")
-
-	if dbSSL == "" {
-		dbSSL = "disable"
-	}
-
-	// We append search_path=auth to restrict operations to the auth schema
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s search_path=auth",
-		dbHost, dbUser, dbPassword, dbName, dbPort, dbSSL)
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "auth.",
-			SingularTable: false,
-		},
+	var err error
+	DB, err = database.Connect(database.DBConfig{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBName:   os.Getenv("DB_NAME"),
+		SSLMode:  os.Getenv("DB_SSLMODE"),
+		Schema:   "auth",
 	})
 	if err != nil {
-		log.Fatalf("Failed to connect to PostgreSQL database: %v", err)
+		slog.Error("Database connection failed", "error", err)
+		os.Exit(1)
 	}
-
-	log.Println("Successfully connected to PostgreSQL (auth schema)")
-	DB = db
 }

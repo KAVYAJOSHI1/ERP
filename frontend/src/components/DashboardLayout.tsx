@@ -31,12 +31,12 @@ interface SidebarItem {
 }
 
 const sidebarItems: SidebarItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'warehouse_manager', 'procurement_manager', 'production_manager', 'finance_manager', 'viewer'] },
-  { name: 'Inventory', href: '/inventory', icon: Warehouse, roles: ['admin', 'warehouse_manager', 'viewer'] },
-  { name: 'Procurement', href: '/procurement', icon: ShoppingCart, roles: ['admin', 'procurement_manager', 'viewer'] },
-  { name: 'Production', href: '/production', icon: Factory, roles: ['admin', 'production_manager', 'viewer'] },
-  { name: 'Finance & Ledger', href: '/finance', icon: Coins, roles: ['admin', 'finance_manager', 'viewer'] },
-  { name: 'AI Intelligence', href: '/intelligence', icon: BrainCircuit, roles: ['admin', 'warehouse_manager', 'procurement_manager', 'production_manager', 'finance_manager', 'viewer'] },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'procurement_manager', 'procurement_specialist', 'production_manager', 'shop_floor_supervisor', 'finance_manager', 'cfo', 'viewer'] },
+  { name: 'Inventory', href: '/inventory', icon: Warehouse, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'viewer'] },
+  { name: 'Procurement', href: '/procurement', icon: ShoppingCart, roles: ['admin', 'procurement_manager', 'procurement_specialist', 'viewer'] },
+  { name: 'Production', href: '/production', icon: Factory, roles: ['admin', 'production_manager', 'shop_floor_supervisor', 'viewer'] },
+  { name: 'Finance & Ledger', href: '/finance', icon: Coins, roles: ['admin', 'finance_manager', 'cfo', 'viewer'] },
+  { name: 'AI Intelligence', href: '/intelligence', icon: BrainCircuit, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'procurement_manager', 'procurement_specialist', 'production_manager', 'shop_floor_supervisor', 'finance_manager', 'cfo', 'viewer'] },
   { name: 'Audit Logs', href: '/audit', icon: FileCheck2, roles: ['admin', 'viewer'] },
   { name: 'User Directory', href: '/users', icon: Users, roles: ['admin', 'viewer'] },
   { name: 'System Observability', href: '/observability', icon: Activity, roles: ['admin', 'viewer'] },
@@ -57,16 +57,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (isMounted && !isAuthenticated) {
-      router.push('/login');
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [isMounted, isAuthenticated, router]);
+  }, [isMounted, isAuthenticated, router, pathname]);
 
   if (!isMounted || !isAuthenticated || !user) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#090d16] text-slate-100">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent shadow-[0_0_15px_rgba(6,182,212,0.4)]"></div>
-          <span className="text-sm font-semibold tracking-wider text-cyan-400">LOADING ERP RUNTIME...</span>
+      <div className="flex h-screen w-screen items-center justify-center bg-[#f8f9fb]">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1e3a5f] border-t-transparent"></div>
+          <span className="text-[11px] font-semibold tracking-wide text-[#64748b]">Loading...</span>
         </div>
       </div>
     );
@@ -80,42 +80,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredItems = sidebarItems.filter(item => item.roles.includes(user.role));
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#090d16]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8f9fb]">
       <CriticalAlertBanner />
+
       {/* Mobile Top Bar */}
-      <div className="flex h-16 w-full items-center justify-between border-b border-slate-800 bg-[#0f172a]/80 px-4 md:hidden fixed top-0 left-0 z-30 backdrop-blur-md">
-        <div className="flex items-center space-x-2">
-          <BrainCircuit className="h-6 w-6 text-cyan-400" />
-          <span className="text-lg font-black tracking-wider text-slate-100 uppercase">Industrial <span className="text-cyan-400">ERP</span></span>
-        </div>
+      <div className="flex h-14 w-full items-center justify-between border-b border-[#e2e8f0] bg-white px-4 md:hidden fixed top-0 left-0 z-30">
+        <span className="text-[13px] font-bold text-[#1e293b]">APEX ERP</span>
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+          className="p-1 text-[#64748b] hover:bg-[#f1f5f9] rounded-sm"
         >
-          {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Sidebar (Desktop & Mobile drawer) */}
+      {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-800 bg-[#0b0f19] transition-transform duration-300 md:translate-x-0 md:static
+        fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-[#e2e8f0] bg-white transition-transform duration-200 md:translate-x-0 md:static
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Brand */}
-        <div className="flex h-20 items-center justify-center border-b border-slate-800 bg-[#0f172a]/30 px-6">
-          <div className="flex items-center space-x-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-950/50 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]">
-              <BrainCircuit className="h-5 w-5 text-cyan-400 animate-pulse" />
-            </div>
-            <span className="text-base font-extrabold tracking-widest text-slate-100 uppercase">
-              APEX <span className="text-cyan-400">ERP</span>
-            </span>
-          </div>
+        <div className="flex h-14 items-center px-5 border-b border-[#e2e8f0]">
+          <span className="text-[13px] font-bold tracking-wide text-[#1e293b]">
+            APEX ERP
+          </span>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-          <div className="mb-2 px-3 text-[10px] font-bold tracking-widest text-slate-500 uppercase">Control Center</div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+          <div className="px-2 mb-3 text-[10px] font-semibold tracking-widest text-[#94a3b8] uppercase">Modules</div>
           {filteredItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -125,49 +118,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 onClick={() => setIsSidebarOpen(false)}
                 className={`
-                  flex items-center space-x-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200 group
+                  flex items-center gap-2.5 rounded-sm px-2.5 py-[7px] text-[12px] font-medium transition-colors
                   ${isActive 
-                    ? 'bg-cyan-950/30 text-cyan-400 border border-cyan-800/30 shadow-[0_0_15px_rgba(6,182,212,0.05)]' 
-                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100 border border-transparent'}
+                    ? 'bg-[#eff6ff] text-[#1e3a5f] font-semibold' 
+                    : 'text-[#475569] hover:bg-[#f8fafc] hover:text-[#1e293b]'}
                 `}
               >
-                <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-cyan-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-[#1e3a5f]' : 'text-[#94a3b8]'}`} />
                 <span>{item.name}</span>
-                {isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]"></span>
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* User Profile Info */}
-        <div className="border-t border-slate-800 bg-[#0f172a]/20 p-4">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800/50 border border-slate-700">
-              <User className="h-4 w-4 text-slate-300" />
+        {/* User Footer */}
+        <div className="border-t border-[#e2e8f0] p-3">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#f1f5f9] border border-[#e2e8f0]">
+              <User className="h-3.5 w-3.5 text-[#64748b]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-xs font-bold text-slate-200">{user.email}</p>
-              <div className="flex items-center space-x-1 mt-0.5">
-                <Shield className="h-3 w-3 text-cyan-400" />
-                <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider">{user.role.replace('_', ' ')}</span>
-              </div>
+              <p className="truncate text-[11px] font-semibold text-[#1e293b]">{user.email}</p>
+              <p className="text-[10px] text-[#94a3b8] uppercase tracking-wide">{user.role.replace(/_/g, ' ')}</p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="flex w-full items-center justify-center space-x-2 rounded-lg bg-slate-900 border border-slate-800 px-3 py-2 text-xs font-bold text-slate-400 hover:bg-red-950/20 hover:text-red-400 hover:border-red-900/30 transition-all duration-200 cursor-pointer"
+            className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-[#e2e8f0] bg-white hover:bg-[#fef2f2] hover:text-[#b91c1c] hover:border-[#fecaca] px-2.5 py-[6px] text-[11px] font-semibold text-[#64748b] transition-colors cursor-pointer"
           >
-            <LogOut className="h-4 w-4" />
-            <span>TERMINATE SESSION</span>
+            <LogOut className="h-3.5 w-3.5" />
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-h-screen pt-16 md:pt-0">
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-screen pt-14 md:pt-0">
+        <main className="flex-1 overflow-y-auto p-5 md:p-7">
           {children}
         </main>
       </div>

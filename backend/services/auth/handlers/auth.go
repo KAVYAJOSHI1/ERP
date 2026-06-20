@@ -64,14 +64,17 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Email and password are required"})
 	}
 
-	// Validate role
 	allowedRoles := map[string]bool{
-		"admin":               true,
-		"warehouse_manager":   true,
-		"procurement_manager": true,
-		"production_manager":  true,
-		"finance_manager":     true,
-		"viewer":              true,
+		"admin":                  true,
+		"warehouse_manager":      true,
+		"inventory_manager":      true,
+		"procurement_manager":    true,
+		"procurement_specialist": true,
+		"production_manager":     true,
+		"shop_floor_supervisor":  true,
+		"finance_manager":        true,
+		"cfo":                    true,
+		"viewer":                 true,
 	}
 
 	if req.Role == "" {
