@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import { correlationIdMiddleware } from './middleware/correlationId';
 import { rateLimitMiddleware } from './middleware/rateLimit';
+import authRoutes from './routes/auth';
 import proxyRouter from './routes/proxy';
 import iotTelemetryRoutes from './routes/iotTelemetry';
 import { connectKafka } from './config/kafka';
@@ -90,6 +91,9 @@ app.get('/health/services', async (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Auth fallback routes under /api/auth
+app.use('/api/auth', authRoutes);
 
 // IoT telemetry ingestion
 app.use('/api/iot', iotTelemetryRoutes);
