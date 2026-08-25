@@ -130,13 +130,7 @@ tr:hover td {
 
 /* ---- Form Controls ---- */
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="search"],
-select,
-textarea {
+:where(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"], select, textarea) {
   font-family: inherit;
   font-size: 13px;
   color: #1e293b;

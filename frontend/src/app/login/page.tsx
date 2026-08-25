@@ -229,7 +229,7 @@ function LoginForm() {
                   Email Address
                 </label>
                 <div className="relative flex items-center">
-                  <Mail className="absolute left-3.5 h-4 w-4 text-[#94a3b8] pointer-events-none" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b] pointer-events-none z-10" />
                   <input
                     id="email-address"
                     name="email"
@@ -238,8 +238,9 @@ function LoginForm() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    className="w-full pl-10 pr-4 py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
+                    placeholder="inventory@erp.com"
+                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
+                    className="w-full py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -249,7 +250,7 @@ function LoginForm() {
                   Password
                 </label>
                 <div className="relative flex items-center">
-                  <Key className="absolute left-3.5 h-4 w-4 text-[#94a3b8] pointer-events-none" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b] pointer-events-none z-10" />
                   <input
                     id="password"
                     name="password"
@@ -258,13 +259,14 @@ function LoginForm() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
+                    placeholder="Enter password (e.g. admin123)"
+                    style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
+                    className="w-full py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-[#94a3b8] hover:text-[#475569] p-1 rounded transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#1e3a5f] p-1 rounded transition-colors z-10"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
