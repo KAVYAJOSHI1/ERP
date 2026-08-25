@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
 import { useTelemetrySocket } from '@/hooks/useTelemetrySocket';
 import CriticalAlertBanner from './CriticalAlertBanner';
+import ReportIssueModal from './ReportIssueModal';
 import { 
   LayoutDashboard, 
   Warehouse, 
@@ -17,6 +18,7 @@ import {
   LogOut,
   User,
   Shield,
+  ShieldAlert,
   Menu,
   X,
   Users,
@@ -47,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useTelemetrySocket();
@@ -153,10 +156,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-h-screen pt-14 md:pt-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-h-screen pt-14 md:pt-0 relative">
         <main className="flex-1 overflow-y-auto p-5 md:p-7">
           {children}
         </main>
+
+        {/* Global Floating Report Issue Button */}
+        <div className="fixed bottom-5 right-5 z-40">
+          <button
+            onClick={() => setIsReportModalOpen(true)}
+            className="flex items-center gap-2 rounded-full bg-[#ef4444] hover:bg-[#dc2626] text-white font-semibold text-[12px] px-4 py-2.5 shadow-lg border border-[#b91c1c] transition-all hover:scale-105 cursor-pointer"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            <span>Report Issue</span>
+          </button>
+        </div>
+
+        <ReportIssueModal 
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+        />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { apiFetch } from '@/lib/api';
-import { AlertTriangle, ShieldCheck, Mail, Key, Lock, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Mail, Key, Lock, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   return (
@@ -27,6 +27,7 @@ function LoginForm() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -191,14 +192,15 @@ function LoginForm() {
   if (!isMounted) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb] px-4 py-12">
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb] px-4 py-8 sm:py-12">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
         
         {/* Left Column: Form Card */}
-        <div className="bg-white rounded-sm border border-[#e2e8f0] p-8 flex flex-col justify-between">
+        <div className="bg-white rounded-md border border-[#e2e8f0] p-6 sm:p-8 flex flex-col justify-between shadow-sm">
           <div>
             <div className="mb-6">
-              <h1 className="text-xl font-bold text-[#1e293b] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1e293b] tracking-tight flex items-center gap-2">
+                <span className="h-3 w-3 bg-[#1e3a5f] rounded-full inline-block"></span>
                 APEX ERP
               </h1>
               <p className="mt-1 text-[11px] text-[#64748b] uppercase tracking-wider font-semibold">
@@ -206,19 +208,19 @@ function LoginForm() {
               </p>
             </div>
 
-            <div className="mb-6 flex items-start gap-3 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-sm">
+            <div className="mb-6 flex items-start gap-3 bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-md">
               <Lock className="h-5 w-5 text-[#1e3a5f] mt-0.5 flex-shrink-0" />
               <div>
                 <h2 className="text-[12px] font-bold text-[#1e293b] uppercase tracking-wider">{branding.title}</h2>
-                <p className="text-[11px] text-[#64748b] mt-0.5">{branding.subtitle}</p>
+                <p className="text-[11px] text-[#64748b] mt-0.5 leading-relaxed">{branding.subtitle}</p>
               </div>
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
-                <div className="flex items-center gap-2 rounded-sm border border-[#fecaca] bg-[#fef2f2] p-3 text-[12px] text-[#991b1b]">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <p className="font-medium">{error}</p>
+                <div className="flex items-start gap-2.5 rounded-md border border-[#fecaca] bg-[#fef2f2] p-3 text.12px text-[#991b1b]">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <p className="font-medium text-[12px] leading-tight flex-1">{error}</p>
                 </div>
               )}
 
@@ -226,8 +228,8 @@ function LoginForm() {
                 <label htmlFor="email-address" className="field-label">
                   Email Address
                 </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3.5 h-4 w-4 text-[#94a3b8] pointer-events-none" />
                   <input
                     id="email-address"
                     name="email"
@@ -237,7 +239,7 @@ function LoginForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
-                    className="pl-9"
+                    className="w-full pl-10 pr-4 py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
                   />
                 </div>
               </div>
@@ -246,27 +248,35 @@ function LoginForm() {
                 <label htmlFor="password" className="field-label">
                   Password
                 </label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-2.5 h-4 w-4 text-[#94a3b8]" />
+                <div className="relative flex items-center">
+                  <Key className="absolute left-3.5 h-4 w-4 text-[#94a3b8] pointer-events-none" />
                   <input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pl-9"
+                    className="w-full pl-10 pr-10 py-2.5 text-[13px] bg-white border border-[#d1d5db] rounded-md focus:border-[#1e3a5f] focus:ring-1 focus:ring-[#1e3a5f] outline-none transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 text-[#94a3b8] hover:text-[#475569] p-1 rounded transition-colors"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
-              <div>
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary w-full py-2.5"
+                  className="btn-primary w-full py-2.5 text-[12px] font-bold tracking-wider rounded-md shadow-sm transition-all"
                 >
                   {loading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto"></div>
@@ -286,31 +296,34 @@ function LoginForm() {
         </div>
 
         {/* Right Column: Quick Profile Switcher */}
-        <div className="bg-white rounded-sm border border-[#e2e8f0] p-8 flex flex-col justify-between">
+        <div className="bg-white rounded-md border border-[#e2e8f0] p-6 sm:p-8 flex flex-col justify-between shadow-sm">
           <div>
-            <div className="mb-5 flex items-center gap-2 border-b border-[#f1f5f9] pb-3">
-              <ShieldCheck className="h-4 w-4 text-[#1e3a5f]" />
-              <h2 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">Quick Sign-In Switcher</h2>
+            <div className="mb-4 flex items-center justify-between border-b border-[#f1f5f9] pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#1e3a5f]" />
+                <h2 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">Quick Sign-In Switcher</h2>
+              </div>
+              <span className="text-[10px] text-[#1e3a5f] bg-[#eff6ff] px-2 py-0.5 rounded font-mono font-semibold">DEMO MODE</span>
             </div>
             
-            <p className="text-[12px] text-[#64748b] mb-5 leading-relaxed">
+            <p className="text-[12px] text-[#64748b] mb-4 leading-relaxed">
               Select an enterprise department profile below to instantly log in and redirect to the corresponding workspace page.
             </p>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2.5">
               {quickProfiles.map((p) => (
                 <button
                   key={p.email}
                   type="button"
                   onClick={() => handleQuickLogin(p.email, p.target)}
-                  className="w-full text-left p-3.5 bg-[#f8fafc] border border-[#e2e8f0] hover:border-[#cbd5e1] hover:bg-[#f1f5f9] transition-all rounded-sm flex items-center justify-between group cursor-pointer"
+                  className="w-full text-left p-3 bg-[#f8fafc] border border-[#e2e8f0] hover:border-[#cbd5e1] hover:bg-[#f1f5f9] transition-all rounded-md flex items-center justify-between group cursor-pointer"
                 >
-                  <div>
-                    <span className="text-[13px] font-bold text-[#1e293b] block">{p.label}</span>
-                    <span className="text-[10px] text-[#64748b] font-mono block mt-0.5">{p.email}</span>
+                  <div className="min-w-0 pr-2">
+                    <span className="text-[13px] font-bold text-[#1e293b] block truncate">{p.label}</span>
+                    <span className="text-[10px] text-[#64748b] font-mono block mt-0.5 truncate">{p.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="badge badge-neutral text-[9px] uppercase font-bold">{p.badge}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="badge badge-neutral text-[9px] uppercase font-bold hidden sm:inline-block">{p.badge}</span>
                     <ArrowRight className="h-4 w-4 text-[#94a3b8] group-hover:text-[#1e3a5f] group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </button>
@@ -318,9 +331,9 @@ function LoginForm() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-[#f1f5f9] pt-4 text-center">
-            <span className="text-[10px] text-[#94a3b8]">
-              Target page redirection active: <code className="bg-[#f1f5f9] px-1 py-0.5 rounded font-mono font-bold text-[#1e3a5f]">{redirect || '/'}</code>
+          <div className="mt-6 border-t border-[#f1f5f9] pt-4 text-center">
+            <span className="text-[10px] text-[#94a3b8] block">
+              Target page redirection: <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded font-mono font-bold text-[#1e3a5f]">{redirect || '/'}</code>
             </span>
           </div>
         </div>
@@ -329,3 +342,4 @@ function LoginForm() {
     </div>
   );
 }
+
