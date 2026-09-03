@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"backend/pkg/database"
+	"backend/pkg/incident"
 	pkgKafka "backend/pkg/kafka"
 	"backend/pkg/logger"
 	"backend/pkg/outbox"
@@ -35,6 +36,9 @@ func main() {
 	_ = godotenv.Load(".env")
 
 	config.ConnectDB()
+
+	// ERP -> IncidentAI escalation channel for operational failures.
+	handlers.IncidentReporter = incident.NewReporter(config.DB)
 
 	// Parse Kafka brokers
 	kafkaBrokers := os.Getenv("KAFKA_BROKERS")

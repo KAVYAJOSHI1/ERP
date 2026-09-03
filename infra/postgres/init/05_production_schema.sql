@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS production.processed_events (
 
 CREATE INDEX IF NOT EXISTS idx_production_outbox_published ON production.outbox_events(published) WHERE published = FALSE;
 
--- Seed initial Work Center
-INSERT INTO production.work_centers (name, capacity, status)
-VALUES ('Assembly Line A', 500.00, 'active')
-ON CONFLICT DO NOTHING;
+-- Seed initial Work Center (fixed UUID for reproducibility).
+INSERT INTO production.work_centers (id, name, capacity, status)
+VALUES ('338ca798-16ca-4485-be77-29c1b2fb49e5', 'Assembly Line A', 500.00, 'active')
+ON CONFLICT (id) DO NOTHING;

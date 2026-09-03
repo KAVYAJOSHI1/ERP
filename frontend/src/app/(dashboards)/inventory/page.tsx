@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { useAlertStore } from '@/lib/alertStore';
+import { useOpStatusStore } from '@/lib/opStatusStore';
 import { 
   Package, 
   Warehouse, 
@@ -54,6 +55,7 @@ const INITIAL_PALLETS = [
 export default function InventoryPage() {
   const queryClient = useQueryClient();
   const criticalAlerts = useAlertStore((s) => s.alerts);
+  const pushOpStatus = useOpStatusStore((s) => s.push);
   const [activeTab, setActiveTab] = useState<'ALL' | 'CELLS' | 'CHASSIS' | 'MOTORS'>('ALL');
   
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -132,13 +134,27 @@ export default function InventoryPage() {
       method: 'POST',
       body: JSON.stringify(adjustment),
     }),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       setShowCycleCount(false); setShowQuarantine(false);
       setCyclePhysicalCount(''); setQuarantineQty('');
+      pushOpStatus({
+        kind: 'success',
+        title: 'Stock level adjusted',
+        detail: 'The adjustment was committed to inventory with a pessimistic row lock and an outbox event.',
+        correlationId: data?.stock_level?.correlation_id,
+      });
     },
     onError: (err: any) => {
-      alert(err.message || 'Transaction failed.');
+      const body = err?.body || {};
+      pushOpStatus({
+        kind: 'error',
+        title: body.error || 'Inventory adjustment rejected',
+        detail: body.message || err?.message || 'Transaction failed.',
+        correlationId: err?.correlationId || body.correlation_id,
+        transactionId: body.transaction_id,
+        incident: body.incident,
+      });
     }
   });
 

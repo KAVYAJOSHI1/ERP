@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS procurement.processed_events (
 
 CREATE INDEX IF NOT EXISTS idx_procurement_outbox_published ON procurement.outbox_events(published) WHERE published = FALSE;
 
--- Seed initial Vendor
-INSERT INTO procurement.vendors (name, email, contact, performance_score)
-VALUES ('Apex Industrial Supply', 'sales@apexindustrial.com', '+1-555-0199', 98.50)
+-- Seed initial Vendor (fixed UUID for reproducibility).
+INSERT INTO procurement.vendors (id, name, email, contact, performance_score)
+VALUES ('a1b2c3d4-0000-4000-8000-000000000001', 'Apex Industrial Supply', 'sales@apexindustrial.com', '+1-555-0199', 98.50)
 ON CONFLICT (email) DO NOTHING;

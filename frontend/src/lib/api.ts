@@ -1,9 +1,30 @@
 import { useAuthStore } from './store';
+import { useOpStatusStore } from './opStatusStore';
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:5000/api';
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
+}
+
+/**
+ * Error thrown by apiFetch on a non-2xx response. Carries the structured backend
+ * error body (which for escalated failures includes `incident` + `correlation_id`
+ * + `transaction_id`) and the gateway X-Correlation-ID, so callers can surface a
+ * proper failure component instead of a bare message.
+ */
+export class ApiError extends Error {
+  status: number;
+  correlationId?: string;
+  body: Record<string, unknown>;
+
+  constructor(message: string, opts: { status: number; correlationId?: string; body?: unknown }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = opts.status;
+    this.correlationId = opts.correlationId;
+    this.body = (opts.body && typeof opts.body === 'object' ? opts.body : {}) as Record<string, unknown>;
+  }
 }
 
 export async function apiFetch(endpoint: string, options: RequestOptions = {}) {
@@ -16,13 +37,9 @@ export async function apiFetch(endpoint: string, options: RequestOptions = {}) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  // Gateway URL mapping
   const url = `${GATEWAY_URL}${endpoint}`;
 
-  let response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response = await fetch(url, { ...options, headers });
 
   // Attempt auto token refresh on 401 Unauthorized
   if (response.status === 401 && refreshToken && !options.skipAuth) {
@@ -37,18 +54,10 @@ export async function apiFetch(endpoint: string, options: RequestOptions = {}) {
       if (refreshResponse.ok) {
         const refreshData = await refreshResponse.json();
         const newAccessToken = refreshData.access_token;
-        
-        // Save new token
         updateAccessToken(newAccessToken);
-        
-        // Retry initial request with new token
         headers.set('Authorization', `Bearer ${newAccessToken}`);
-        response = await fetch(url, {
-          ...options,
-          headers,
-        });
+        response = await fetch(url, { ...options, headers });
       } else {
-        // Refresh token failed/expired -> force logout
         console.warn('Refresh token is invalid, logging out user.');
         clearAuth();
         if (typeof window !== 'undefined') {
@@ -64,9 +73,28 @@ export async function apiFetch(endpoint: string, options: RequestOptions = {}) {
     }
   }
 
+  // The gateway echoes the correlation id it generated/propagated for this call.
+  const correlationId =
+    response.headers.get('X-Correlation-ID') || response.headers.get('x-correlation-id') || undefined;
+  if (correlationId) {
+    try {
+      useOpStatusStore.setState({ lastCorrelationId: correlationId });
+    } catch {
+      /* store not ready (SSR) — ignore */
+    }
+  }
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || errorData.error || `HTTP error ${response.status}`);
+    const message =
+      (errorData as any).message ||
+      (errorData as any).error ||
+      `HTTP error ${response.status}`;
+    throw new ApiError(message, {
+      status: response.status,
+      correlationId: (errorData as any).correlation_id || correlationId,
+      body: errorData,
+    });
   }
 
   return response.json();

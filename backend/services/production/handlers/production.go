@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"backend/pkg/incident"
 	"production-service/config"
 	"production-service/models"
 
@@ -70,6 +72,9 @@ func adjustInventoryStock(productID, warehouseID string, delta float64, adjustTy
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	// Mark this as an internal orchestration call so the inventory service does
+	// not raise its own incident — the production service owns the escalation.
+	req.Header.Set("X-Service-Origin", "production-service")
 	if correlationID != "" {
 		req.Header.Set("X-Correlation-ID", correlationID)
 	}
@@ -168,12 +173,56 @@ func CreateBOM(c *fiber.Ctx) error {
 	return c.Status(201).JSON(bom)
 }
 
+// productionRunView is a production run plus, when the run failed and was
+// escalated, the linked IncidentAI incident and its current resolution status.
+type productionRunView struct {
+	models.ProductionRun
+	Incident *incidentLinkView `json:"incident,omitempty"`
+}
+
+type incidentLinkView struct {
+	IncidentID       string `json:"incident_id"`
+	IncidentNumber   string `json:"incident_number"`
+	IncidentStatus   string `json:"incident_status"`
+	IncidentAIStatus string `json:"incident_ai_status,omitempty"`
+	CorrelationID    string `json:"correlation_id"`
+	ErrorMessage     string `json:"error_message"`
+	Route            string `json:"route,omitempty"`
+}
+
 func GetProductionRuns(c *fiber.Ctx) error {
 	var runs []models.ProductionRun
 	if err := config.DB.Preload("BOM").Preload("WorkCenter").Order("created_at desc").Find(&runs).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": "Failed to fetch production runs"})
 	}
-	return c.JSON(runs)
+
+	ids := make([]string, 0, len(runs))
+	for _, r := range runs {
+		ids = append(ids, r.ID)
+	}
+	links, err := incident.GetByTransactionIDs(config.DB, ids)
+	if err != nil {
+		slog.Warn("could not load incident links for production runs", "error", err)
+		links = nil
+	}
+
+	views := make([]productionRunView, 0, len(runs))
+	for i := range runs {
+		v := productionRunView{ProductionRun: runs[i]}
+		if l, ok := links[runs[i].ID]; ok && l != nil {
+			v.Incident = &incidentLinkView{
+				IncidentID:       l.IncidentID,
+				IncidentNumber:   l.IncidentNumber,
+				IncidentStatus:   l.IncidentStatus,
+				IncidentAIStatus: l.IncidentAIStatus,
+				CorrelationID:    l.CorrelationID,
+				ErrorMessage:     l.ErrorMessage,
+				Route:            l.Route,
+			}
+		}
+		views = append(views, v)
+	}
+	return c.JSON(views)
 }
 
 func CreateProductionRun(c *fiber.Ctx) error {
@@ -202,9 +251,17 @@ func CreateProductionRun(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Bad Request", "message": "Work center is in maintenance"})
 	}
 
-	// 3. Deduct raw materials from inventory (Warehouse ID: d9336520-cdb8-4cf8-b0b3-87da46820efc)
-	warehouseID := "d9336520-cdb8-4cf8-b0b3-87da46820efc"
-	
+	// 3. Deduct raw materials from inventory. The warehouse is resolved from
+	//    persisted inventory state, never a hard-coded UUID.
+	warehouseID, err := ResolveWarehouseID(config.DB)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error":          "Internal Server Error",
+			"message":        fmt.Sprintf("Could not resolve production warehouse: %v", err),
+			"correlation_id": correlationID,
+		})
+	}
+
 	run := models.ProductionRun{
 		BOMID:         req.BOMID,
 		WorkCenterID:  req.WorkCenterID,
@@ -217,9 +274,9 @@ func CreateProductionRun(c *fiber.Ctx) error {
 	run.StartedAt = &now
 
 	// Call stock deduction for each component
-	for _, comp := range bom.Components {
+	for idx, comp := range bom.Components {
 		totalQtyRequired := comp.QuantityRequired * req.Quantity
-		err := adjustInventoryStock(
+		derr := adjustInventoryStock(
 			comp.RawMaterialID,
 			warehouseID,
 			-totalQtyRequired,
@@ -227,11 +284,38 @@ func CreateProductionRun(c *fiber.Ctx) error {
 			correlationID, // Use correlationID as references
 			correlationID,
 		)
-		if err != nil {
-			return c.Status(400).JSON(fiber.Map{
-				"error":   "Insufficient Materials",
-				"message": fmt.Sprintf("Failed to deduct raw material: %v", err),
-			})
+		if derr != nil {
+			if idx > 0 {
+				// A prior component was already deducted; compensation is out of
+				// scope for this pass (see audit). The failed run row records it.
+				slog.Warn("production run failed after partial material deduction",
+					"correlation_id", correlationID, "deducted_components", idx)
+			}
+
+			// Persist the failed transaction so the incident has a real, linkable id.
+			failedAt := time.Now()
+			run.Status = "failed"
+			run.CompletedAt = &failedAt
+			if perr := config.DB.Create(&run).Error; perr != nil {
+				slog.Error("failed to persist failed production run", "error", perr)
+			}
+
+			errMsg := fmt.Sprintf("Failed to deduct raw material: %v", derr)
+			incView := escalateFailure(
+				correlationID, run.ID, "production_run.create",
+				comp.RawMaterialID, lookupSKU(comp.RawMaterialID), "/production", errMsg,
+			)
+
+			resp := fiber.Map{
+				"error":          "Insufficient Materials",
+				"message":        errMsg,
+				"correlation_id": correlationID,
+				"transaction_id": run.ID,
+			}
+			if incView != nil {
+				resp["incident"] = incView
+			}
+			return c.Status(400).JSON(resp)
 		}
 	}
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"backend/pkg/database"
+	"backend/pkg/incident"
 	pkgKafka "backend/pkg/kafka"
 	"backend/pkg/logger"
 	"backend/pkg/outbox"
@@ -37,6 +38,9 @@ func main() {
 
 	config.ConnectDB()
 	handlers.DB = config.DB
+
+	// ERP -> IncidentAI escalation channel for operational failures.
+	handlers.IncidentReporter = incident.NewReporter(config.DB)
 
 	// Parse Kafka brokers
 	kafkaBrokers := os.Getenv("KAFKA_BROKERS")

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"backend/pkg/database"
+	"backend/pkg/incident"
 	"backend/pkg/logger"
 	"production-service/config"
 	"production-service/handlers"
@@ -38,6 +39,9 @@ func main() {
 	_ = godotenv.Load(".env")
 
 	config.ConnectDB()
+
+	// ERP -> IncidentAI escalation channel for operational failures.
+	handlers.IncidentReporter = incident.NewReporter(config.DB)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -97,6 +101,10 @@ func main() {
 	app.Get("/production/runs", handlers.GetProductionRuns)
 	app.Post("/production/runs", handlers.CreateProductionRun)
 
+	// ERP <-> IncidentAI link
+	app.Get("/production/incident-links", handlers.GetIncidentLink)
+	app.Post("/production/incident-callback/status", handlers.IncidentCallbackStatus)
+
 	port := os.Getenv("PRODUCTION_SERVICE_PORT")
 	if port == "" {
 		port = "8085"
@@ -151,7 +159,6 @@ func startShopFloorSimulationWorker(ctx context.Context) {
 
 	// Default yield completion time: 30 seconds for quick local testing/verification
 	const runDuration = 30 * time.Second
-	warehouseID := "d9336520-cdb8-4cf8-b0b3-87da46820efc"
 
 	slog.Info("Shop floor simulation worker active")
 
@@ -162,6 +169,12 @@ func startShopFloorSimulationWorker(ctx context.Context) {
 			return
 		case <-ticker.C:
 			if config.DB == nil {
+				continue
+			}
+
+			warehouseID, whErr := handlers.ResolveWarehouseID(config.DB)
+			if whErr != nil {
+				slog.Error("Shop floor worker: cannot resolve warehouse, skipping tick", "error", whErr)
 				continue
 			}
 
@@ -249,6 +262,7 @@ func creditInventoryStock(productID, warehouseID string, delta float64, adjustTy
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Service-Origin", "production-service")
 	if correlationID != "" {
 		req.Header.Set("X-Correlation-ID", correlationID)
 	}

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { useOpStatusStore } from '@/lib/opStatusStore';
 import Link from 'next/link';
 import { 
   ShoppingCart, 
@@ -42,6 +43,7 @@ interface Product {
 
 export default function ProcurementPage() {
   const queryClient = useQueryClient();
+  const pushOpStatus = useOpStatusStore((s) => s.push);
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [showCreatePO, setShowCreatePO] = useState(false);
 
@@ -84,9 +86,17 @@ export default function ProcurementPage() {
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
       setShowAddVendor(false);
       setVName(''); setVEmail(''); setVPhone('');
+      pushOpStatus({ kind: 'success', title: 'Vendor onboarded', detail: 'Supplier persisted to the procurement ledger.' });
     },
     onError: (err: any) => {
-      alert(err.message || 'Failed to add vendor');
+      const body = err?.body || {};
+      pushOpStatus({
+        kind: 'error',
+        title: body.error || 'Vendor onboarding failed',
+        detail: body.message || err?.message || 'Failed to add vendor.',
+        correlationId: err?.correlationId || body.correlation_id,
+        incident: body.incident,
+      });
     }
   });
 
@@ -95,13 +105,28 @@ export default function ProcurementPage() {
       method: 'POST',
       body: JSON.stringify(newPO),
     }),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       setShowCreatePO(false);
       setPoQty(1); setPoPrice(10.0);
+      pushOpStatus({
+        kind: 'success',
+        title: 'Purchase order created',
+        detail: `PO ${String(data?.id || '').slice(0, 8).toUpperCase()} written with a transactional outbox event.`,
+        transactionId: data?.id,
+        correlationId: data?.correlation_id,
+      });
     },
     onError: (err: any) => {
-      alert(err.message || 'Failed to create purchase order');
+      const body = err?.body || {};
+      pushOpStatus({
+        kind: 'error',
+        title: body.error || 'Purchase order rejected',
+        detail: body.message || err?.message || 'Failed to create purchase order.',
+        correlationId: err?.correlationId || body.correlation_id,
+        transactionId: body.transaction_id,
+        incident: body.incident,
+      });
     }
   });
 

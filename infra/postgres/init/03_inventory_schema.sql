@@ -57,7 +57,9 @@ CREATE TABLE IF NOT EXISTS inventory.outbox_events (
 
 CREATE INDEX IF NOT EXISTS idx_inventory_outbox_published ON inventory.outbox_events(published) WHERE published = FALSE;
 
--- Seed initial Warehouse
-INSERT INTO inventory.warehouses (name, location, capacity)
-VALUES ('Main Warehouse', 'Detroit, MI', 10000.00)
-ON CONFLICT DO NOTHING;
+-- Seed initial Warehouse (fixed UUID so a clean database is fully reproducible).
+-- Production resolves the warehouse dynamically by name/first-row — it does NOT depend
+-- on this constant — but pinning the id keeps integration tests and older references stable.
+INSERT INTO inventory.warehouses (id, name, location, capacity)
+VALUES ('d9336520-cdb8-4cf8-b0b3-87da46820efc', 'Main Warehouse', 'Detroit, MI', 10000.00)
+ON CONFLICT (id) DO NOTHING;

@@ -4,16 +4,20 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { 
-  Factory, 
-  Cpu, 
-  Layers, 
-  Play, 
+import { useOpStatusStore } from '@/lib/opStatusStore';
+import { incidentUrl, incidentStatusPresentation } from '@/lib/incidentai';
+import {
+  Factory,
+  Cpu,
+  Layers,
+  Play,
   Plus,
   Clock,
   Gauge,
   Wrench,
-  TrendingUp
+  TrendingUp,
+  ShieldAlert,
+  ExternalLink
 } from 'lucide-react';
 
 interface WorkCenter {
@@ -38,6 +42,16 @@ interface BOM {
   components?: BOMComponent[];
 }
 
+interface IncidentLinkView {
+  incident_id?: string;
+  incident_number?: string;
+  incident_status?: string;
+  incident_ai_status?: string;
+  correlation_id?: string;
+  error_message?: string;
+  route?: string;
+}
+
 interface ProductionRun {
   id: string;
   bom_id: string;
@@ -49,6 +63,7 @@ interface ProductionRun {
   completed_at?: string;
   bom?: BOM;
   work_center?: WorkCenter;
+  incident?: IncidentLinkView | null;
 }
 
 interface Product {
@@ -108,21 +123,41 @@ export default function ProductionPage() {
     if (workCenters.length > 0 && !selectedWC) setSelectedWC(workCenters[0].id);
   }, [workCenters, selectedWC]);
 
+  const pushOpStatus = useOpStatusStore((s) => s.push);
+
   // Dispatch Order Mutation
   const dispatchMutation = useMutation({
     mutationFn: (newRun: any) => apiFetch('/production/runs', {
       method: 'POST',
       body: JSON.stringify(newRun)
     }),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['productionRuns'] });
       queryClient.invalidateQueries({ queryKey: ['workCenters'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stockLevels'] });
       setShowNewRunForm(false);
       setRunQty(100);
+      pushOpStatus({
+        kind: 'success',
+        title: 'Production run dispatched',
+        detail: `Job ${String(data?.id || '').slice(0, 8).toUpperCase()} started — raw materials were deducted from live inventory.`,
+        transactionId: data?.id,
+        correlationId: data?.correlation_id,
+      });
     },
     onError: (err: any) => {
-      alert(err.message || 'Failed to dispatch work order. Make sure there is enough inventory for the raw material components!');
+      // The backend is the source of truth: it has already persisted the failed
+      // transaction and (for operational failures) opened an IncidentAI incident.
+      const body = err?.body || {};
+      pushOpStatus({
+        kind: 'error',
+        title: body.error || 'Production run rejected',
+        detail: body.message || err?.message || 'Failed to dispatch work order — not enough raw material for the recipe.',
+        correlationId: err?.correlationId || body.correlation_id,
+        transactionId: body.transaction_id,
+        incident: body.incident,
+      });
     }
   });
 
@@ -356,6 +391,7 @@ export default function ProductionPage() {
                     <th>Work Center</th>
                     <th className="text-right">Job Batch</th>
                     <th>Progress / State</th>
+                    <th>IncidentAI</th>
                     <th>Dispatched At</th>
                   </tr>
                 </thead>
@@ -374,13 +410,16 @@ export default function ProductionPage() {
                             <span className="font-mono font-bold text-[#334155]">{info.percent}%</span>
                           </div>
                           <div className="w-full bg-[#e2e8f0] rounded-sm h-1.5 overflow-hidden">
-                            <div 
+                            <div
                               className={`h-full rounded-sm transition-all duration-300 ${
                                 run.status === 'completed' ? 'bg-[#166534]' : 'bg-[#1e3a5f]'
                               }`}
                               style={{ width: `${info.percent}%` }}
                             ></div>
                           </div>
+                        </td>
+                        <td>
+                          <IncidentCell incident={run.incident} />
                         </td>
                         <td className="text-[11px] font-mono text-[#64748b]">
                           {run.started_at ? new Date(run.started_at).toLocaleString() : 'N/A'}
@@ -396,5 +435,55 @@ export default function ProductionPage() {
 
       </div>
     </DashboardLayout>
+  );
+}
+
+// Renders the IncidentAI link + live status for a failed run. The status comes
+// from GET /production/runs (polled every 4s) — the ERP backend / database is the
+// source of truth, never local React state.
+function IncidentCell({ incident }: { incident?: IncidentLinkView | null }) {
+  if (!incident || (!incident.incident_id && !incident.correlation_id)) {
+    return <span className="text-[11px] text-[#cbd5e1]">—</span>;
+  }
+  const escalated = Boolean(incident.incident_id);
+  const pres = incidentStatusPresentation(incident.incident_status);
+  const number = incident.incident_number || incident.incident_id;
+
+  return (
+    <div className="flex flex-col gap-1 min-w-[150px]">
+      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-[#94a3b8]">
+        <ShieldAlert className="h-3 w-3 text-[#ef4444]" /> IncidentAI
+      </span>
+      {escalated ? (
+        <>
+          <span className="font-mono text-[11px] font-bold text-[#1e3a5f]">{number}</span>
+          <span
+            className="inline-flex w-fit items-center gap-1 rounded-xs border px-1.5 py-0.5 text-[10px] font-bold"
+            style={{ color: pres.text, background: pres.bg, borderColor: pres.border }}
+          >
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: pres.dot }} />
+            {pres.label}
+          </span>
+          {incident.correlation_id && (
+            <span
+              className="font-mono text-[9px] text-[#94a3b8] truncate max-w-[150px]"
+              title={`Correlation ID: ${incident.correlation_id}`}
+            >
+              {incident.correlation_id}
+            </span>
+          )}
+          <a
+            href={incidentUrl(incident.incident_id, incident.incident_number)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-fit items-center gap-1 text-[10px] font-semibold text-[#1e3a5f] hover:underline"
+          >
+            Open in IncidentAI <ExternalLink className="h-3 w-3" />
+          </a>
+        </>
+      ) : (
+        <span className="text-[10px] text-[#64748b]">escalation pending…</span>
+      )}
+    </div>
   );
 }

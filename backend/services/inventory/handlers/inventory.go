@@ -280,10 +280,35 @@ func AdjustStock(c *fiber.Ctx) error {
 	})
 
 	if err != nil {
+		errMsg := err.Error()
+		status := 500
+		title := "Internal Server Error"
 		if fiberErr, ok := err.(*fiber.Error); ok {
-			return c.Status(fiberErr.Code).JSON(fiber.Map{"error": "Bad Request", "message": fiberErr.Message})
+			status = fiberErr.Code
+			title = "Bad Request"
+			errMsg = fiberErr.Message
 		}
-		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": err.Error()})
+
+		resp := fiber.Map{
+			"error":          title,
+			"message":        errMsg,
+			"correlation_id": correlationID,
+			"transaction_id": req.ReferenceID,
+		}
+
+		// Automatically escalate to IncidentAI — but only for direct user-facing
+		// calls. Internal orchestration calls (e.g. from the production service)
+		// carry X-Service-Origin; that caller owns the escalation so we don't
+		// double-report the same correlation id with the wrong module.
+		if c.Get("X-Service-Origin") == "" {
+			if incView := escalateFailure(
+				correlationID, req.ReferenceID, "stock.adjust",
+				req.ProductID, lookupSKU(req.ProductID), errMsg,
+			); incView != nil {
+				resp["incident"] = incView
+			}
+		}
+		return c.Status(status).JSON(resp)
 	}
 
 	telemetry.StockAdjustmentsTotal.WithLabelValues(adjustType).Inc()

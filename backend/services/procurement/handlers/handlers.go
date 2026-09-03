@@ -179,7 +179,19 @@ func CreatePurchaseOrder(c *fiber.Ctx) error {
 	})
 
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Internal Server Error", "message": err.Error()})
+		var productID string
+		if len(req.LineItems) > 0 {
+			productID = req.LineItems[0].ProductID
+		}
+		resp := fiber.Map{
+			"error":          "Internal Server Error",
+			"message":        err.Error(),
+			"correlation_id": correlationID,
+		}
+		if incView := escalateFailure(correlationID, "", "purchase_order.create", productID, err.Error()); incView != nil {
+			resp["incident"] = incView
+		}
+		return c.Status(500).JSON(resp)
 	}
 
 	telemetry.PurchaseOrdersTotal.WithLabelValues("manual").Inc()

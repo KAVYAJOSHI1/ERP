@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { useOpStatusStore } from '@/lib/opStatusStore';
+import { INCIDENTAI_INGEST_URL } from '@/lib/incidentai';
 import { 
   AlertTriangle, 
   Upload, 
@@ -22,7 +24,8 @@ interface ReportIssueModalProps {
 
 export default function ReportIssueModal({ isOpen, onClose }: ReportIssueModalProps) {
   const pathname = usePathname();
-  const { user, token } = useAuthStore();
+  const { user, accessToken: token } = useAuthStore();
+  const lastCorrelationId = useOpStatusStore((s) => s.lastCorrelationId);
 
   const [description, setDescription] = useState('');
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -93,16 +96,20 @@ export default function ReportIssueModal({ isOpen, onClose }: ReportIssueModalPr
         erp_context: {
           erp: 'Smart Manufacturing ERP',
           module: currentModule,
+          operation: 'manual_report',
           route: pathname,
           record_id: currentRecordId,
+          // Forward the correlation id of the most recent ERP call so a manually
+          // filed incident can still be joined to the originating transaction.
+          correlation_id: lastCorrelationId || undefined,
           user_id: user?.id,
           user_role: user?.role,
           timestamp: new Date().toISOString()
         }
       };
 
-      // Call IncidentAI ingestion API (direct or via gateway proxy)
-      const res = await fetch('http://localhost:4000/api/incidents/ingest', {
+      // Call the IncidentAI ingestion API. Same contract as the automated path.
+      const res = await fetch(INCIDENTAI_INGEST_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

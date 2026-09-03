@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
+import { useOpStatusStore } from '@/lib/opStatusStore';
 import { useTelemetrySocket } from '@/hooks/useTelemetrySocket';
 import CriticalAlertBanner from './CriticalAlertBanner';
+import OperationStatusBanner from './OperationStatusBanner';
 import ReportIssueModal from './ReportIssueModal';
 import { 
   LayoutDashboard, 
@@ -48,6 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
+  const clearOpStatus = useOpStatusStore((s) => s.clear);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -57,6 +60,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Operation-status feed is per-workspace; clear it when the module changes.
+  useEffect(() => {
+    clearOpStatus();
+  }, [pathname, clearOpStatus]);
 
   useEffect(() => {
     if (isMounted && !isAuthenticated) {
@@ -158,6 +166,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-screen pt-14 md:pt-0 relative">
         <main className="flex-1 overflow-y-auto p-5 md:p-7">
+          <OperationStatusBanner />
           {children}
         </main>
 

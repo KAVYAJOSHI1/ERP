@@ -13,6 +13,7 @@ import { rateLimitMiddleware } from './middleware/rateLimit';
 import authRoutes from './routes/auth';
 import proxyRouter from './routes/proxy';
 import iotTelemetryRoutes from './routes/iotTelemetry';
+import incidentCallbackRoutes from './routes/incidentCallback';
 import { connectKafka } from './config/kafka';
 import { initAlertsHub } from './ws/alertsHub';
 
@@ -97,6 +98,9 @@ app.use('/api/auth', authRoutes);
 
 // IoT telemetry ingestion
 app.use('/api/iot', iotTelemetryRoutes);
+
+// IncidentAI -> ERP status callback (shared-secret auth, not JWT)
+app.use('/api/incident-callback', incidentCallbackRoutes);
 
 // Proxy routes under /api prefix
 app.use('/api', proxyRouter);
