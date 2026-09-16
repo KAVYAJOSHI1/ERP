@@ -90,6 +90,24 @@ router.post(
   rbacMiddleware(['admin', 'procurement_specialist', 'procurement_manager']), 
   createServiceProxy(PROCUREMENT_SERVICE_URL, '^/api')
 );
+router.put(
+  '/procurement*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'procurement_specialist', 'procurement_manager']), 
+  createServiceProxy(PROCUREMENT_SERVICE_URL, '^/api')
+);
+router.patch(
+  '/procurement*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'procurement_specialist', 'procurement_manager']), 
+  createServiceProxy(PROCUREMENT_SERVICE_URL, '^/api')
+);
+router.delete(
+  '/procurement*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'procurement_specialist', 'procurement_manager']), 
+  createServiceProxy(PROCUREMENT_SERVICE_URL, '^/api')
+);
 
 // 5. Finance Service Routing
 router.get(
@@ -104,12 +122,30 @@ router.post(
   rbacMiddleware(['admin', 'cfo', 'finance_manager']), 
   createServiceProxy(FINANCE_SERVICE_URL, '^/api')
 );
+router.put(
+  '/finance*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'cfo', 'finance_manager']), 
+  createServiceProxy(FINANCE_SERVICE_URL, '^/api')
+);
+router.patch(
+  '/finance*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'cfo', 'finance_manager']), 
+  createServiceProxy(FINANCE_SERVICE_URL, '^/api')
+);
+router.delete(
+  '/finance*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'cfo', 'finance_manager']), 
+  createServiceProxy(FINANCE_SERVICE_URL, '^/api')
+);
 
 // 6. Intelligence Service Routing
 router.get(
   '/intelligence*', 
   authMiddleware, 
-  rbacMiddleware(['admin', 'inventory_manager', 'warehouse_manager', 'procurement_specialist', 'procurement_manager', 'shop_floor_supervisor', 'production_manager', 'cfo', 'finance_manager', 'viewer']), 
+  rbacMiddleware(['admin', 'inventory_manager', 'warehouse_manager', 'procurement_specialist', 'procurement_manager', 'shop_floor_supervisor', 'production_manager', 'viewer']), 
   createServiceProxy(INTELLIGENCE_SERVICE_URL, '^/api')
 );
 
@@ -121,6 +157,24 @@ router.get(
   createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
 );
 router.post(
+  '/production*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'shop_floor_supervisor', 'production_manager']), 
+  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
+);
+router.put(
+  '/production*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'shop_floor_supervisor', 'production_manager']), 
+  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
+);
+router.patch(
+  '/production*', 
+  authMiddleware, 
+  rbacMiddleware(['admin', 'shop_floor_supervisor', 'production_manager']), 
+  createServiceProxy(PRODUCTION_SERVICE_URL, '^/api')
+);
+router.delete(
   '/production*', 
   authMiddleware, 
   rbacMiddleware(['admin', 'shop_floor_supervisor', 'production_manager']), 

@@ -4,6 +4,7 @@ docker compose up -d
 
 echo "Starting Gateway..."
 cd gateway
+export PATH="/home/lenovo/.nvm/versions/node/v22.14.0/bin:$PATH"
 npm run dev > ../gateway.log 2>&1 &
 echo $! > ../gateway.pid
 cd ..
@@ -46,7 +47,8 @@ cd ../../../
 
 echo "Starting Frontend..."
 cd frontend
-npm run dev > ../frontend.log 2>&1 &
+export PATH="/home/lenovo/.nvm/versions/node/v22.14.0/bin:$PATH"
+npx next dev -p 3002 > ../frontend.log 2>&1 &
 echo $! > ../frontend.pid
 cd ..
 

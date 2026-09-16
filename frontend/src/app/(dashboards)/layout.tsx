@@ -12,8 +12,8 @@ const ROLE_ALLOWED_PATHS: Record<string, string[]> = {
   procurement_manager: ['/procurement', '/intelligence', '/'],
   shop_floor_supervisor: ['/production', '/intelligence', '/'],
   production_manager: ['/production', '/intelligence', '/'],
-  cfo: ['/finance', '/intelligence', '/'],
-  finance_manager: ['/finance', '/intelligence', '/'],
+  cfo: ['/finance'],
+  finance_manager: ['/finance'],
 };
 
 export default function DashboardsLayout({ children }: { children: React.ReactNode }) {

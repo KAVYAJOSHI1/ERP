@@ -149,34 +149,54 @@ export default function ObservabilityDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
           {/* Grafana */}
-          <div
-            className="bg-white border border-[#e2e8f0] rounded-sm p-6 group hover:border-[#1e3a5f] transition-all cursor-pointer flex flex-col justify-between"
-            onClick={() => window.open('http://localhost:3000', '_blank')}
-          >
+          <div className="bg-white border border-[#e2e8f0] rounded-sm p-6 flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between">
                 <div className="p-2.5 rounded-sm bg-[#fff7ed] text-[#ea580c] border border-[#ffedd5]">
                   <BarChart2 className="h-5 w-5" />
                 </div>
-                <ArrowRight className="h-4 w-4 text-[#94a3b8] group-hover:text-[#1e3a5f] transition-colors group-hover:translate-x-1" />
+                <button 
+                  onClick={() => window.open('http://localhost:3005', '_blank')}
+                  className="text-xs font-bold text-[#ea580c] hover:underline flex items-center gap-1"
+                >
+                  <span>Open Grafana</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
               <div className="mt-4">
-                <h3 className="text-base font-bold text-[#1e293b]">Grafana Dashboards</h3>
+                <h3 className="text-base font-bold text-[#1e293b]">Grafana Telemetry Dashboards</h3>
                 <p className="text-[12px] text-[#64748b] mt-1.5 leading-relaxed">
-                  HTTP request rates, P95/P99 latency histograms, business KPIs, Go runtime metrics, and Loki log aggregation.
+                  Real-time microservice throughput, P95/P99 latency histograms, business KPIs, Go runtime metrics, and Loki logs.
                 </p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {['System Overview', 'Business KPIs', 'Health'].map((d) => (
-                    <span key={d} className="text-[10px] px-2 py-0.5 rounded-sm bg-[#fff7ed] text-[#ea580c] border border-[#ffedd5] font-bold uppercase font-mono">
-                      {d}
-                    </span>
-                  ))}
+                
+                <div className="mt-4 space-y-2">
+                  <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Direct ERP Dashboards:</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); window.open('http://localhost:3005/d/erp-system-overview', '_blank'); }}
+                      className="text-[11px] px-2.5 py-1 rounded bg-[#fff7ed] text-[#ea580c] border border-[#ffedd5] font-bold hover:bg-[#ffedd5] transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      📊 System Overview <ArrowRight className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); window.open('http://localhost:3005/d/erp-business-kpis', '_blank'); }}
+                      className="text-[11px] px-2.5 py-1 rounded bg-[#fff7ed] text-[#ea580c] border border-[#ffedd5] font-bold hover:bg-[#ffedd5] transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      📈 Business KPIs <ArrowRight className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); window.open('http://localhost:3005/d/erp-health', '_blank'); }}
+                      className="text-[11px] px-2.5 py-1 rounded bg-[#fff7ed] text-[#ea580c] border border-[#ffedd5] font-bold hover:bg-[#ffedd5] transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      🛡️ Service Health <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
             <div className="mt-6 pt-3 border-t border-[#f1f5f9] flex items-center justify-between text-[11px] font-semibold text-[#94a3b8] uppercase font-mono">
-              <span>Port: 3000</span>
-              <span className="text-[#ea580c]">Metrics & Logs</span>
+              <span>Port: 3005</span>
+              <span className="text-[#ea580c]">Direct Metric Streams</span>
             </div>
           </div>
 
@@ -301,7 +321,93 @@ export default function ObservabilityDashboard() {
           </div>
         </div>
 
+        {/* Live Embedded Grafana ERP Dashboard Viewer */}
+        <EmbeddedGrafanaViewer />
+
       </div>
     </DashboardLayout>
+  );
+}
+
+function EmbeddedGrafanaViewer() {
+  const [activeDashboard, setActiveDashboard] = useState<'overview' | 'kpis' | 'health'>('overview');
+
+  const dashboardUrls = {
+    overview: 'http://localhost:3005/d/erp-system-overview/erp-system-overview?kiosk=1',
+    kpis: 'http://localhost:3005/d/erp-business-kpis/erp-business-kpis?kiosk=1',
+    health: 'http://localhost:3005/d/erp-health/smart-erp-health-dashboard?kiosk=1'
+  };
+
+  const directUrls = {
+    overview: 'http://localhost:3005/d/erp-system-overview',
+    kpis: 'http://localhost:3005/d/erp-business-kpis',
+    health: 'http://localhost:3005/d/erp-health'
+  };
+
+  return (
+    <div className="bg-white border border-[#e2e8f0] rounded-sm p-5 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#f1f5f9]">
+        <div>
+          <h2 className="text-sm font-bold text-[#1e293b] flex items-center gap-2">
+            <BarChart2 className="h-4 w-4 text-[#ea580c]" />
+            Live Smart ERP Grafana Telemetry Viewer
+          </h2>
+          <p className="text-[11px] text-[#64748b] mt-0.5">
+            Interactive real-time telemetry stream from Grafana engine (Port 3005)
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-md border border-[#cbd5e1] p-0.5 bg-[#f8fafc]">
+            <button
+              onClick={() => setActiveDashboard('overview')}
+              className={`px-3 py-1 text-[11px] font-bold rounded-sm transition-all ${
+                activeDashboard === 'overview'
+                  ? 'bg-[#1e3a5f] text-white shadow-sm'
+                  : 'text-[#64748b] hover:text-[#1e293b]'
+              }`}
+            >
+              📊 System Overview
+            </button>
+            <button
+              onClick={() => setActiveDashboard('kpis')}
+              className={`px-3 py-1 text-[11px] font-bold rounded-sm transition-all ${
+                activeDashboard === 'kpis'
+                  ? 'bg-[#1e3a5f] text-white shadow-sm'
+                  : 'text-[#64748b] hover:text-[#1e293b]'
+              }`}
+            >
+              📈 Business KPIs
+            </button>
+            <button
+              onClick={() => setActiveDashboard('health')}
+              className={`px-3 py-1 text-[11px] font-bold rounded-sm transition-all ${
+                activeDashboard === 'health'
+                  ? 'bg-[#1e3a5f] text-white shadow-sm'
+                  : 'text-[#64748b] hover:text-[#1e293b]'
+              }`}
+            >
+              🛡️ Service Health
+            </button>
+          </div>
+
+          <button
+            onClick={() => window.open(directUrls[activeDashboard], '_blank')}
+            className="btn-secondary !py-1 !px-2.5 !text-[11px] flex items-center gap-1"
+          >
+            <span>Pop Out</span>
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full h-[520px] bg-[#0f172a] rounded-sm overflow-hidden border border-[#334155] relative">
+        <iframe
+          src={dashboardUrls[activeDashboard]}
+          className="w-full h-full border-0"
+          title="Grafana Dashboard"
+        />
+      </div>
+    </div>
   );
 }

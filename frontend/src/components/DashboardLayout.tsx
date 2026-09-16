@@ -35,12 +35,12 @@ interface SidebarItem {
 }
 
 const sidebarItems: SidebarItem[] = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'procurement_manager', 'procurement_specialist', 'production_manager', 'shop_floor_supervisor', 'finance_manager', 'cfo', 'viewer'] },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'viewer'] },
   { name: 'Inventory', href: '/inventory', icon: Warehouse, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'viewer'] },
   { name: 'Procurement', href: '/procurement', icon: ShoppingCart, roles: ['admin', 'procurement_manager', 'procurement_specialist', 'viewer'] },
   { name: 'Production', href: '/production', icon: Factory, roles: ['admin', 'production_manager', 'shop_floor_supervisor', 'viewer'] },
   { name: 'Finance & Ledger', href: '/finance', icon: Coins, roles: ['admin', 'finance_manager', 'cfo', 'viewer'] },
-  { name: 'AI Intelligence', href: '/intelligence', icon: BrainCircuit, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'procurement_manager', 'procurement_specialist', 'production_manager', 'shop_floor_supervisor', 'finance_manager', 'cfo', 'viewer'] },
+  { name: 'AI Intelligence', href: '/intelligence', icon: BrainCircuit, roles: ['admin', 'warehouse_manager', 'inventory_manager', 'procurement_manager', 'procurement_specialist', 'production_manager', 'shop_floor_supervisor', 'viewer'] },
   { name: 'Audit Logs', href: '/audit', icon: FileCheck2, roles: ['admin', 'viewer'] },
   { name: 'User Directory', href: '/users', icon: Users, roles: ['admin', 'viewer'] },
   { name: 'System Observability', href: '/observability', icon: Activity, roles: ['admin', 'viewer'] },

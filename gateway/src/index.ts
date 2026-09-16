@@ -49,6 +49,20 @@ const metricsMiddleware = promBundle({
 });
 app.use(metricsMiddleware as any);
 
+// Root endpoint for API Gateway
+app.get('/', (req, res) => {
+  res.json({
+    service: "Smart Manufacturing ERP API Gateway",
+    status: "UP",
+    endpoints: {
+      health: "/health",
+      services_health: "/health/services"
+    },
+    incidentai_frontend: "http://localhost:3001",
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -60,11 +74,11 @@ app.get('/health', (req, res) => {
 
 // Aggregate health endpoint — polls all downstream services and returns their status
 const DOWNSTREAM_SERVICES = [
-  { name: 'auth-service',         url: `${process.env.AUTH_SERVICE_URL        || 'http://localhost:8080'}/health` },
-  { name: 'inventory-service',    url: `${process.env.INVENTORY_SERVICE_URL   || 'http://localhost:8081'}/health` },
-  { name: 'procurement-service',  url: `${process.env.PROCUREMENT_SERVICE_URL || 'http://localhost:8082'}/health` },
-  { name: 'finance-service',      url: `${process.env.FINANCE_SERVICE_URL     || 'http://localhost:8083'}/health` },
-  { name: 'intelligence-service', url: `${process.env.INTELLIGENCE_SERVICE_URL|| 'http://localhost:8084'}/health` },
+  { name: 'auth-service',         url: `${process.env.AUTH_SERVICE_URL        || 'http://127.0.0.1:8080'}/health` },
+  { name: 'inventory-service',    url: `${process.env.INVENTORY_SERVICE_URL   || 'http://127.0.0.1:8081'}/health` },
+  { name: 'procurement-service',  url: `${process.env.PROCUREMENT_SERVICE_URL || 'http://127.0.0.1:8082'}/health` },
+  { name: 'finance-service',      url: `${process.env.FINANCE_SERVICE_URL     || 'http://127.0.0.1:8083'}/health` },
+  { name: 'intelligence-service', url: `${process.env.INTELLIGENCE_SERVICE_URL|| 'http://127.0.0.1:8084'}/health` },
 ];
 
 function pingService(url: string): Promise<boolean> {
